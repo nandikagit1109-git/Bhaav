@@ -463,14 +463,13 @@ app.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'messages array is required' });
     }
 
-    const Anthropic = require('@anthropic-ai/sdk');
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const AI_API_KEY = process.env.FEATHERLESS_API_KEY || process.env.AI_API_KEY;
+    const AI_BASE_URL = process.env.FEATHERLESS_BASE_URL || process.env.AI_BASE_URL || 'https://api.featherless.ai/v1';
+    const AI_MODEL = process.env.AI_MODEL || 'meta-llama/Meta-Llama-3.1-8B-Instruct';
 
-    if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+    if (!AI_API_KEY || AI_API_KEY === 'YOUR_API_KEY_HERE') {
       return res.json({ reply: generateCompanionFallback(messages) });
     }
-
-    const client = new Anthropic({ apiKey });
 
     const COMPANION_PROMPT = `You are a warm, reflective companion inside a wellbeing app called Bhaav. You are NOT a therapist, counselor, or medical professional, and must never imply otherwise.
 
@@ -484,19 +483,36 @@ When someone shares how they're feeling:
 
 Remember: You are a companion, not a therapist.`;
 
-    const conversationMessages = messages.map((m) => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.content,
-    }));
+    const conversationMessages = [
+      { role: 'system', content: COMPANION_PROMPT },
+      ...messages.map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content,
+      })),
+    ];
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 256,
-      system: COMPANION_PROMPT,
-      messages: conversationMessages,
+    const aiRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${AI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: conversationMessages,
+        max_tokens: 256,
+        temperature: 0.7,
+      }),
     });
 
-    const reply = response.content[0]?.text || 'I hear you. Could you tell me more about that?';
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      console.error('AI API error:', aiRes.status, errText);
+      return res.json({ reply: generateCompanionFallback(messages) });
+    }
+
+    const aiData = await aiRes.json();
+    const reply = aiData.choices?.[0]?.message?.content || 'I hear you. Could you tell me more about that?';
 
     return res.json({ reply });
   } catch (err) {

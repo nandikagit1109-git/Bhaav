@@ -8,7 +8,7 @@
  * SAFETY: Never sends user's written content. Only behavioral metrics.
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
+
 
 const SYSTEM_PROMPT = `You are a gentle, non-clinical writing-pattern observer for a wellbeing app called Bhaav.
 
@@ -90,26 +90,42 @@ function formatUserMessage(metrics, deviation, previousSuggestion) {
  * Generate an AI insight — returns structured JSON.
  */
 async function generateInsight(metrics, deviation, previousSuggestion = null) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const AI_API_KEY = process.env.FEATHERLESS_API_KEY || process.env.AI_API_KEY;
+  const AI_BASE_URL = process.env.FEATHERLESS_BASE_URL || process.env.AI_BASE_URL || 'https://api.featherless.ai/v1';
+  const AI_MODEL = process.env.AI_MODEL || 'meta-llama/Meta-Llama-3.1-8B-Instruct';
 
-  if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+  if (!AI_API_KEY || AI_API_KEY === 'YOUR_API_KEY_HERE') {
     return generateFallbackInsight(metrics, deviation, previousSuggestion);
   }
 
-  const client = new Anthropic({ apiKey });
   const userMessage = formatUserMessage(metrics, deviation, previousSuggestion);
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
-      messages: [
-        { role: 'user', content: userMessage },
-      ],
+    const aiRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${AI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
+        max_tokens: 512,
+        temperature: 0.7,
+      }),
     });
 
-    const raw = response.content[0]?.text || '{}';
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      console.error('AI API error:', aiRes.status, errText);
+      return generateFallbackInsight(metrics, deviation, previousSuggestion);
+    }
+
+    const aiData = await aiRes.json();
+    const raw = aiData.choices?.[0]?.message?.content || '{}';
 
     // Parse JSON from the response
     let parsed;
@@ -134,7 +150,7 @@ async function generateInsight(metrics, deviation, previousSuggestion = null) {
       deviation,
     };
   } catch (err) {
-    console.error('Anthropic API error:', err.message);
+    console.error('AI API error:', err.message);
     return generateFallbackInsight(metrics, deviation, previousSuggestion);
   }
 }
