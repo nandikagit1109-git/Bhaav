@@ -51,7 +51,7 @@ function RoomShell() {
 // ========================================
 function DustParticles() {
   const ref = useRef();
-  const count = 300;
+  const count = 120;
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -287,8 +287,7 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
 
       <Canvas
         camera={{ position: [0, 1.6, 2.5], fov: 55, near: 0.1, far: 100 }}
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-        shadows
+        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
         style={{ position: 'absolute', top: 0, left: 0 }}
         onCreated={() => setLoadProgress(100)}
       >

@@ -1,26 +1,27 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import useGameStore from './gameStore';
 
+// Reuse vectors to avoid GC
 const _dir = new THREE.Vector3();
 const _toObj = new THREE.Vector3();
+const _worldPos = new THREE.Vector3();
 
 /**
- * Crosshair — raycasts from camera center to detect interactable objects.
- * Shows "E to interact" prompt. Triggers interaction on E press.
- *
- * interactables: Array<{ id: string, ref: React.RefObject, maxDistance?: number }>
+ * Optimized crosshair — raycast every 3 frames.
  */
 export default function Crosshair({ interactables = [], onInteract }) {
   const { camera } = useThree();
   const [hovered, setHovered] = useState(null);
   const setHoveredObject = useGameStore((s) => s.setHoveredObject);
+  const frameCount = useRef(0);
 
   useFrame(() => {
+    frameCount.current++;
+    if (frameCount.current % 3 !== 0) return; // Only every 3rd frame
     if (!interactables.length) return;
 
-    // Camera forward direction
     _dir.set(0, 0, -1).applyQuaternion(camera.quaternion);
 
     let closest = null;
@@ -29,15 +30,12 @@ export default function Crosshair({ interactables = [], onInteract }) {
     for (const obj of interactables) {
       if (!obj.ref?.current) continue;
 
-      const worldPos = new THREE.Vector3();
-      obj.ref.current.getWorldPosition(worldPos);
-
-      _toObj.subVectors(worldPos, camera.position);
+      obj.ref.current.getWorldPosition(_worldPos);
+      _toObj.subVectors(_worldPos, camera.position);
       const dist = _toObj.length();
 
       if (dist > (obj.maxDistance || 4)) continue;
 
-      // Check if object is roughly in front (45° cone)
       const dot = _dir.dot(_toObj.normalize());
       if (dot < 0.7) continue;
 
@@ -57,7 +55,6 @@ export default function Crosshair({ interactables = [], onInteract }) {
     });
   });
 
-  // E key listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'KeyE' && hovered) {
