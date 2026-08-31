@@ -1,37 +1,74 @@
-# Bhaav Backend
+# Bhaav Frontend
 
-"It reads what you don't say."
+An immersive 3D narrative journal — a quiet digital space that learns the rhythm of how you write.
 
-A lightweight writing space designed for wellbeing and self-awareness. The system observes typing behavior rather than content, building a personal baseline to help users notice changes in their own patterns.
+## The Experience
 
-## Quick Start
+Bhaav is NOT a conventional web app. It is an interactive digital art experience where:
+
+- Your typing rhythm becomes the environment
+- Pauses become stillness  
+- Sessions become memory
+- The data becomes the landscape
+
+## Tech Stack
+
+- React 19
+- Vite
+- React Three Fiber (3D)
+- Three.js
+- @react-three/drei
+- Framer Motion
+- Zustand
+
+## Getting Started
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
-
-# Generate demo data (14 days)
-npm run generate-demo
 ```
 
-## API Endpoints
+The app runs on `http://localhost:5173` and connects to the backend on `http://localhost:4000`.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| POST | `/session` | Submit typing session data |
-| GET | `/insight/:user_id` | Get AI-powered pattern insight |
+## Environment Variables
+
+Copy `.env.example` to `.env`:
+
+```bash
+VITE_API_BASE_URL=http://localhost:4000
+```
 
 ## Architecture
 
-- **Feature Extraction**: Analyzes typing patterns (WPM, pauses, backspace rate, etc.)
-- **Personal Baseline**: Compares against the user's own history (not others)
-- **Deviation Scoring**: Z-score based measurement of pattern changes
-- **AI Insights**: Non-clinical observations about typing pattern changes
+```
+src/
+├── App.jsx              # Root — game state machine
+├── api.js               # Centralized API client
+├── gameStore.js         # Zustand state
+├── EntryExperience.jsx  # Original 2D landing
+├── RoomEntry.jsx        # 3D cinematic entry
+├── MoodRoom.jsx         # Main 3D environment
+├── RoomJournal.jsx      # Writing mode
+├── RoomObjects.jsx      # 3D furniture + interactables
+├── RoomAreas.jsx        # Rhythm Wall, Reflection, Support, etc.
+├── FirstPersonControls.jsx  # WASD + mouse look
+├── Crosshair.jsx        # Raycast interaction system
+├── MoodLighting.jsx     # Dynamic mood-reactive lighting
+├── InkLine.jsx          # Live-reacting SVG ink line
+├── InkCloud.jsx         # Entry scene ink cloud
+├── Dashboard.jsx        # 2D analysis dashboard
+└── AdminDashboard.jsx   # Campus Pulse admin view
+```
 
-## Important
+## Privacy
 
-This is a **self-awareness tool**, NOT a clinical diagnostic system. It identifies changes from your personal typing baseline. It never diagnoses or labels mental health conditions.
+Bhaav NEVER stores or transmits journal text. Only keystroke metadata is captured:
+
+- Key type (char, space, backspace, enter)
+- Timestamp
+
+All analysis is performed on aggregated behavioral patterns, never content.
+
+## License
+
+MIT
