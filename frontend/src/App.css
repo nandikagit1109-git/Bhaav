@@ -172,10 +172,12 @@ button {
   padding: 0 0 8vh;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: transparent;
+  text-align: center;
 }
 
 .card-label {
   margin-bottom: 40px;
+  text-align: center;
 }
 
 
@@ -185,6 +187,8 @@ button {
 
 .rhythm-grid {
   width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 40px;
@@ -195,6 +199,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  text-align: center;
 }
 
 .rhythm-stat span {
@@ -203,6 +208,7 @@ button {
   font-size: 8px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .rhythm-stat strong {
@@ -228,6 +234,8 @@ button {
 
 .change-list {
   width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
 }
@@ -267,6 +275,7 @@ button {
 
 .learning-state {
   padding: 20px 0;
+  text-align: center;
 }
 
 .learning-state h2 {
@@ -280,11 +289,12 @@ button {
 
 .learning-state p {
   max-width: 550px;
-  margin: 0;
+  margin: 0 auto;
   color: rgba(255, 255, 255, 0.45);
   font-family: "Inter", Arial, sans-serif;
   font-size: 12px;
   line-height: 1.8;
+  text-align: center;
 }
 
 .session-count {
@@ -294,6 +304,7 @@ button {
   font-size: 8px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 
@@ -350,6 +361,8 @@ button {
 
 .baseline-grid {
   width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 50px;
@@ -359,6 +372,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  text-align: center;
 }
 
 .baseline-grid span {
