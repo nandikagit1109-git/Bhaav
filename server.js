@@ -3,166 +3,55 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const { initDatabase } = require("./db/db");
 
-const app = express();
+async function startServer() {
+  await initDatabase();
 
+  const app = express();
+  app.use(cors());
+  app.use(express.json());
 
-// =====================================
-// MIDDLEWARE
-// =====================================
+  const frontendBuild = path.join(__dirname, "frontend", "dist");
+  app.use(express.static(frontendBuild));
 
-app.use(cors());
+  app.use("/api/users", require("./routes/users"));
+  app.use("/api/sessions", require("./routes/sessions"));
+  app.use("/api/insight", require("./routes/insights"));
+  app.use("/api/analysis", require("./routes/analysis"));
+  app.use("/api/settings", require("./routes/settings"));
+  app.use("/api/data", require("./routes/data"));
+  app.use("/api/campus-pulse", require("./routes/campusPulse"));
+  app.use("/api/feedback", require("./routes/feedback"));
+  app.use("/api/admin", require("./routes/admin"));
 
-app.use(express.json());
-
-
-// =====================================
-// SERVE FRONTEND BUILD
-// =====================================
-
-const frontendBuild = path.join(__dirname, "frontend", "dist");
-app.use(express.static(frontendBuild));
-
-
-// =====================================
-// DATABASE
-// =====================================
-
-require("./db/db");
-
-
-// =====================================
-// ROUTES
-// =====================================
-
-const adminRoutes = require("./routes/admin");
-
-
-// USERS
-app.use(
-  "/api/users",
-  require("./routes/users")
-);
-
-
-// SESSIONS
-app.use(
-  "/api/sessions",
-  require("./routes/sessions")
-);
-
-
-// INSIGHTS
-app.use(
-  "/api/insight",
-  require("./routes/insights")
-);
-
-
-// ⭐ FULL PERSONAL ANALYSIS
-app.use(
-  "/api/analysis",
-  require("./routes/analysis")
-);
-
-
-// SETTINGS
-app.use(
-  "/api/settings",
-  require("./routes/settings")
-);
-
-
-// DATA
-app.use(
-  "/api/data",
-  require("./routes/data")
-);
-
-
-// CAMPUS PULSE
-app.use(
-  "/api/campus-pulse",
-  require("./routes/campusPulse")
-);
-
-
-// FEEDBACK
-app.use(
-  "/api/feedback",
-  require("./routes/feedback")
-);
-
-
-// ADMIN
-app.use(
-  "/api/admin",
-  adminRoutes
-);
-
-
-// =====================================
-// HEALTH CHECK
-// =====================================
-
-app.get("/health", (req, res) => {
-
-  res.json({
-    app: "Bhaav Backend",
-    status: "Running",
-    version: "1.0"
+  app.get("/health", (req, res) => {
+    res.json({ app: "Bhaav Backend", status: "Running", version: "1.0" });
   });
 
-});// =====================================
-// 404 HANDLER — API returns JSON, everything else serves frontend
-// =====================================
-app.use((req, res, next) => {
-
-  if (req.path.startsWith("/api/")) {
-    return res.status(404).json({
-      success: false,
-      message: "Bhaav API route not found.",
-      path: req.originalUrl
-    });
-  }
-
-  // For all non-API routes, serve the React app (SPA fallback)
-  res.sendFile(path.join(frontendBuild, "index.html"));
-
-});
-
-
-// =====================================
-// GLOBAL ERROR HANDLER
-// =====================================
-
-app.use((err, req, res, next) => {
-
-  console.error(
-    "Server error:",
-    err
-  );
-
-  res.status(500).json({
-    success: false,
-    message: "Internal server error."
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      return res.status(404).json({
+        success: false,
+        message: "Bhaav API route not found.",
+        path: req.originalUrl
+      });
+    }
+    res.sendFile(path.join(frontendBuild, "index.html"));
   });
 
-});
+  app.use((err, req, res, next) => {
+    console.error("Server error:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  });
 
+  const PORT = parseInt(process.env.PORT, 10) || 4000;
+  app.listen(PORT, () => {
+    console.log("Bhaav backend running on http://localhost:" + PORT);
+  });
+}
 
-// =====================================
-// START SERVER
-// =====================================
-
-const PORT =
-  parseInt(process.env.PORT, 10) || 4000;
-
-
-app.listen(PORT, () => {
-
-  console.log(
-    ` Bhaav backend running on http://localhost:${PORT}`
-  );
-
+startServer().catch(err => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
 });
