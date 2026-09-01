@@ -1,29 +1,46 @@
-import * as THREE from 'three';
-
 /**
- * Optimized mood lighting — 3 lights total, all static.
- * No useFrame hooks. Zero per-frame cost.
+ * Warm, home-like mood lighting.
+ * Amber overhead, soft warm fill, gentle cool accent.
+ * All static — zero per-frame cost.
  */
 export default function MoodLighting() {
   return (
     <>
-      {/* Ambient — base fill */}
-      <ambientLight color="#1a1816" intensity={0.12} />
+      {/* Ambient — warm base fill */}
+      <ambientLight color="#2a1f14" intensity={0.18} />
 
-      {/* Main overhead — warm */}
+      {/* Main overhead — warm amber desk lamp glow */}
       <pointLight
         position={[0.3, 2.6, 0.2]}
-        color="#e8c080"
-        intensity={0.35}
-        distance={7}
+        color="#e8b060"
+        intensity={0.5}
+        distance={8}
         decay={2}
       />
 
-      {/* Fill — cool from behind */}
+      {/* Secondary warm — from the wall light strip */}
       <pointLight
-        position={[0, 0.8, -1.5]}
-        color="#2a3a5a"
-        intensity={0.06}
+        position={[-2.5, 0.5, 0]}
+        color="#c8956c"
+        intensity={0.2}
+        distance={5}
+        decay={2}
+      />
+
+      {/* Fill — subtle cool from the window side */}
+      <pointLight
+        position={[3, 1.2, -0.5]}
+        color="#3a4a6a"
+        intensity={0.12}
+        distance={5}
+        decay={2}
+      />
+
+      {/* Soft back fill — prevents total darkness */}
+      <pointLight
+        position={[0, 1.5, -2]}
+        color="#4a3a2a"
+        intensity={0.08}
         distance={4}
         decay={2}
       />

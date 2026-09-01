@@ -119,7 +119,7 @@ export const DeskLamp = forwardRef(function DeskLamp({ highlighted }, ref) {
       </mesh>
       <mesh position={[0, 0.3, 0]}>
         <sphereGeometry args={[0.15, 8, 8]} />
-        <meshBasicMaterial color="#e8c080" transparent opacity={highlighted ? 0.08 : 0.02} />
+        <meshBasicMaterial color="#e8b060" transparent opacity={highlighted ? 0.12 : 0.04} />
       </mesh>
     </group>
   );
@@ -180,37 +180,24 @@ export const WallClock = forwardRef(function WallClock({ highlighted }, ref) {
 });
 
 // ========================================
-// FLOATING PAPERS — single useFrame for all 5 papers
+// FLOATING PAPERS — STATIC, no useFrame
+// PERFORMANCE: Removed per-frame animation.
 // ========================================
-export function FloatingPapers({ clutterLevel = 0 }) {
-  const groupRef = useRef();
+export function FloatingPapers() {
   const papers = useMemo(() => {
     return Array.from({ length: 5 }, (_, i) => ({
       id: i,
       pos: [(Math.random() - 0.5) * 3, 0.5 + Math.random() * 2, (Math.random() - 0.5) * 2 - 1],
       rot: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI],
-      speed: 0.2 + Math.random() * 0.5,
-      phase: Math.random() * Math.PI * 2,
     }));
   }, []);
 
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    const t = state.clock.elapsedTime;
-    const children = groupRef.current.children;
-    for (let i = 0; i < children.length; i++) {
-      const p = papers[i];
-      if (!p) continue;
-      children[i].position.y = p.pos[1] + Math.sin(t * p.speed + p.phase) * (0.1 + clutterLevel * 0.5);
-    }
-  });
-
   return (
-    <group ref={groupRef}>
+    <group>
       {papers.map((p) => (
         <mesh key={p.id} position={p.pos} rotation={p.rot}>
           <planeGeometry args={[0.18, 0.24]} />
-          <meshStandardMaterial color="#1a1816" side={THREE.DoubleSide} transparent opacity={0.25 + clutterLevel * 0.3} />
+          <meshStandardMaterial color="#2a2018" side={THREE.DoubleSide} transparent opacity={0.3} />
         </mesh>
       ))}
     </group>
@@ -226,7 +213,7 @@ export const BookShelf = forwardRef(function BookShelf({ clutterLevel = 0, highl
       id: i,
       x: -0.4 + i * 0.16,
       height: 0.22 + Math.random() * 0.18,
-      color: new THREE.Color().setHSL(0.05 + Math.random() * 0.1, 0.15, 0.12 + Math.random() * 0.08),
+      color: new THREE.Color().setHSL(0.06 + Math.random() * 0.12, 0.2, 0.14 + Math.random() * 0.1),
       lean: (Math.random() - 0.5) * 0.08,
     }));
   }, []);

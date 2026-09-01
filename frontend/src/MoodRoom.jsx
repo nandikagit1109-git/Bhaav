@@ -1,54 +1,59 @@
 import { Suspense, useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { motion } from 'framer-motion';
+import * as THREE from 'three';
 
 import FirstPersonControls from './FirstPersonControls.jsx';
 import Crosshair from './Crosshair.jsx';
 import MoodLighting from './MoodLighting.jsx';
 import {
-  Desk, Chair, Journal, DeskLamp, WallClock,
+  Desk, Chair, Journal, DeskLamp, Radio, WallClock,
   BookShelf, Window, WallArt, PottedPlant, WallLightStrip,
+  FloatingPapers,
 } from './RoomObjects.jsx';
 import {
-  RhythmWall, SupportRoom, AnalysisZone,
+  RhythmWall, ReflectionSpace, SupportRoom, AnalysisZone,
+  CampusPulse, SuggestionObject, SessionMemory,
 } from './RoomAreas.jsx';
 import useGameStore from './gameStore';
 
 // ========================================
-// ROOM SHELL — static, no useFrame
+// ROOM SHELL — warmer, home-like colors
 // ========================================
 function RoomShell() {
   return (
     <group>
+      {/* Floor — warm dark wood */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#0e0c0a" roughness={0.85} metalness={0.02} />
+        <meshStandardMaterial color="#1a1410" roughness={0.75} metalness={0.05} />
       </mesh>
+      {/* Back wall — warm charcoal */}
       <mesh position={[0, 1.5, -3]}>
         <planeGeometry args={[10, 3]} />
-        <meshStandardMaterial color="#100e0c" roughness={0.92} />
+        <meshStandardMaterial color="#1c1814" roughness={0.88} />
       </mesh>
+      {/* Left wall */}
       <mesh position={[-4, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[8, 3]} />
-        <meshStandardMaterial color="#0e0c0a" roughness={0.92} />
+        <meshStandardMaterial color="#18140f" roughness={0.88} />
       </mesh>
+      {/* Right wall */}
       <mesh position={[4, 1.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[8, 3]} />
-        <meshStandardMaterial color="#0e0c0a" roughness={0.92} />
+        <meshStandardMaterial color="#18140f" roughness={0.88} />
       </mesh>
+      {/* Ceiling */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#080606" roughness={0.95} />
+        <meshStandardMaterial color="#0f0d0a" roughness={0.92} />
       </mesh>
     </group>
   );
 }
 
 // ========================================
-// DUST PARTICLES — STATIC, no useFrame
+// DUST PARTICLES — STATIC
 // ========================================
-// PERFORMANCE: Previous version had 50 particles with per-frame useFrame
-// updates. Now purely static — zero per-frame CPU cost.
 function DustParticles() {
   const positions = useMemo(() => {
     const count = 30;
@@ -66,7 +71,7 @@ function DustParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={30} array={positions} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial color="#e8d8c0" size={0.004} transparent opacity={0.1} sizeAttenuation />
+      <pointsMaterial color="#e8d8c0" size={0.005} transparent opacity={0.12} sizeAttenuation />
     </points>
   );
 }
@@ -78,37 +83,36 @@ function LoadingScreen({ progress }) {
   return (
     <div style={{
       position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-      background: '#000', display: 'flex', flexDirection: 'column',
+      background: '#0a0806', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', zIndex: 10,
       transition: 'opacity 0.8s ease', opacity: progress >= 100 ? 0 : 1,
       pointerEvents: progress >= 100 ? 'none' : 'auto',
     }}>
       <p style={{
         fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: 300,
-        letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: '24px',
+        letterSpacing: '0.1em', color: 'rgba(200,160,120,0.5)', marginBottom: '24px',
       }}>entering the room</p>
       <div style={{
-        width: '200px', height: '1px', background: 'rgba(255,255,255,0.08)',
+        width: '200px', height: '1px', background: 'rgba(200,160,120,0.08)',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, height: '100%',
-          width: `${progress}%`, background: 'rgba(255,255,255,0.25)',
+          width: `${progress}%`, background: 'rgba(200,160,120,0.25)',
           transition: 'width 0.3s ease',
         }} />
       </div>
       <p style={{
         fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '0.15em',
-        color: 'rgba(255,255,255,0.15)', marginTop: '12px',
+        color: 'rgba(200,160,120,0.15)', marginTop: '12px',
       }}>{progress}%</p>
     </div>
   );
 }
 
 // ========================================
-// CENTERED INK WAVE — CSS only, no framer-motion
+// CENTERED INK WAVE — CSS only
 // ========================================
-// PERFORMANCE: Replaced framer-motion infinite animations with CSS.
 function CenteredInkWave() {
   return (
     <div style={{
@@ -140,9 +144,11 @@ function CenteredInkWave() {
 function InteractionLabel({ hoveredObject }) {
   if (!hoveredObject) return null;
   const labels = {
-    journal: 'write', lamp: 'toggle light',
+    journal: 'write', lamp: 'toggle light', radio: 'tune',
     clock: 'notice time', bookshelf: 'browse', window: 'look outside',
-    rhythmWall: 'explore rhythm', support: 'support', analysis: 'explore data',
+    rhythmWall: 'explore rhythm', reflection: 'reflect',
+    support: 'support', analysis: 'explore data',
+    campus: 'campus pulse', suggestion: 'notice',
   };
   return (
     <div style={{
@@ -152,20 +158,22 @@ function InteractionLabel({ hoveredObject }) {
     }}>
       <p style={{
         fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '0.3em',
-        color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase',
+        color: 'rgba(200,160,120,0.35)', textTransform: 'uppercase',
       }}>[E] {labels[hoveredObject] || hoveredObject}</p>
     </div>
   );
 }
 
 // ========================================
-// MAIN MOOD ROOM — OPTIMIZED
+// MAIN MOOD ROOM
 // ========================================
-export default function MoodRoom({ onWrite, onDashboard }) {
+export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflection, onSupport }) {
   const hoveredObject = useGameStore((s) => s.hoveredObject);
+  const analysis = useGameStore((s) => s.analysis);
+  const insight = useGameStore((s) => s.insight);
+  const campusData = useGameStore((s) => s.campusData);
   const sessions = useGameStore((s) => s.sessions);
   const sessionCount = useGameStore((s) => s.sessionCount);
-  const analysis = useGameStore((s) => s.analysis);
 
   const [loading, setLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState(0);
@@ -173,12 +181,16 @@ export default function MoodRoom({ onWrite, onDashboard }) {
   // Refs for interactable objects
   const journalRef = useRef();
   const lampRef = useRef();
+  const radioRef = useRef();
   const clockRef = useRef();
   const bookshelfRef = useRef();
   const windowRef = useRef();
   const rhythmWallRef = useRef();
+  const reflectionRef = useRef();
   const supportRef = useRef();
   const analysisRef = useRef();
+  const campusRef = useRef();
+  const suggestionRef = useRef();
 
   // Loading simulation
   useEffect(() => {
@@ -199,26 +211,32 @@ export default function MoodRoom({ onWrite, onDashboard }) {
   const interactables = useMemo(() => [
     { id: 'journal', ref: journalRef, maxDistance: 3 },
     { id: 'lamp', ref: lampRef, maxDistance: 3 },
+    { id: 'radio', ref: radioRef, maxDistance: 3.5 },
     { id: 'clock', ref: clockRef, maxDistance: 4 },
     { id: 'bookshelf', ref: bookshelfRef, maxDistance: 4 },
     { id: 'window', ref: windowRef, maxDistance: 4 },
     { id: 'rhythmWall', ref: rhythmWallRef, maxDistance: 4 },
+    { id: 'reflection', ref: reflectionRef, maxDistance: 4 },
     { id: 'support', ref: supportRef, maxDistance: 4 },
     { id: 'analysis', ref: analysisRef, maxDistance: 4 },
+    { id: 'campus', ref: campusRef, maxDistance: 4 },
+    { id: 'suggestion', ref: suggestionRef, maxDistance: 3 },
   ], []);
 
-  // E-key interaction
+  // E-key interaction — all features connected
   const handleInteract = useCallback((objectId) => {
     switch (objectId) {
       case 'journal': onWrite(); break;
-      case 'analysis': onDashboard?.(); break;
-      case 'support': onDashboard?.(); break;
+      case 'analysis': onAnalysis?.() || onDashboard?.(); break;
+      case 'reflection': onReflection?.() || onDashboard?.(); break;
+      case 'support': onSupport?.() || onDashboard?.(); break;
+      case 'campus': onDashboard?.(); break;
       default: break;
     }
-  }, [onWrite, onDashboard]);
+  }, [onWrite, onAnalysis, onReflection, onSupport, onDashboard]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#000', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#0a0806', position: 'relative' }}>
       {loading && <LoadingScreen progress={loadProgress} />}
 
       <Canvas
@@ -229,8 +247,8 @@ export default function MoodRoom({ onWrite, onDashboard }) {
         onCreated={() => setLoadProgress(100)}
       >
         <Suspense fallback={null}>
-          <color attach="background" args={['#050404']} />
-          <fog attach="fog" args={['#050404', 1.5, 8]} />
+          <color attach="background" args={['#0a0806']} />
+          <fog attach="fog" args={['#0a0806', 1.5, 9]} />
 
           <FirstPersonControls
             moveSpeed={2.8}
@@ -245,24 +263,40 @@ export default function MoodRoom({ onWrite, onDashboard }) {
           <MoodLighting />
           <RoomShell />
 
-          {/* Core interactables */}
+          {/* === WRITING AREA === */}
           <Desk highlighted={false} />
           <Chair />
           <Journal ref={journalRef} highlighted={hoveredObject === 'journal'} />
           <DeskLamp ref={lampRef} highlighted={hoveredObject === 'lamp'} />
           <PottedPlant />
 
-          {/* Data areas */}
+          {/* === RHYTHM WALL === */}
           <RhythmWall ref={rhythmWallRef} sessions={sessions} highlighted={hoveredObject === 'rhythmWall'} />
+
+          {/* === ANALYSIS ZONE === */}
           <AnalysisZone ref={analysisRef} analysis={analysis} highlighted={hoveredObject === 'analysis'} />
+
+          {/* === REFLECTION === */}
+          <ReflectionSpace ref={reflectionRef} insight={insight} highlighted={hoveredObject === 'reflection'} />
+
+          {/* === SUPPORT === */}
           <SupportRoom ref={supportRef} highlighted={hoveredObject === 'support'} />
 
-          {/* Decor — all static, zero useFrame */}
+          {/* === CAMPUS PULSE === */}
+          <CampusPulse ref={campusRef} campusData={campusData} highlighted={hoveredObject === 'campus'} />
+
+          {/* === SUGGESTION === */}
+          <SuggestionObject ref={suggestionRef} suggestion={insight?.suggestion} highlighted={hoveredObject === 'suggestion'} />
+
+          {/* === DECOR === */}
+          <Radio ref={radioRef} highlighted={hoveredObject === 'radio'} />
           <WallClock ref={clockRef} highlighted={hoveredObject === 'clock'} />
           <BookShelf ref={bookshelfRef} highlighted={hoveredObject === 'bookshelf'} />
           <Window ref={windowRef} highlighted={hoveredObject === 'window'} />
           <WallArt />
           <WallLightStrip />
+          <FloatingPapers />
+          <SessionMemory sessionCount={sessionCount} />
           <DustParticles />
         </Suspense>
       </Canvas>
@@ -282,10 +316,10 @@ export default function MoodRoom({ onWrite, onDashboard }) {
         }}>
           <span style={{
             fontFamily: "'Cormorant Garamond', serif", fontSize: '18px',
-            fontWeight: 300, letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.4)',
+            fontWeight: 300, letterSpacing: '-0.02em', color: 'rgba(200,160,120,0.5)',
           }}>bhaav</span>
           <button onClick={onDashboard} style={{
-            background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)',
+            background: 'none', border: 'none', color: 'rgba(200,160,120,0.25)',
             fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '0.15em',
             textTransform: 'uppercase', cursor: 'pointer', padding: '8px 0',
           }}>dashboard</button>
@@ -296,12 +330,11 @@ export default function MoodRoom({ onWrite, onDashboard }) {
         }}>
           <p style={{
             fontFamily: "'Inter', sans-serif", fontSize: '8px', letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: 'rgba(255,255,255,0.08)',
+            textTransform: 'uppercase', color: 'rgba(200,160,120,0.1)',
           }}>click to look · wasd to move · e to interact · esc to release</p>
         </div>
       </div>
 
-      {/* CSS for ink pulse animation */}
       <style>{`
         @keyframes inkPulse {
           0%, 100% { opacity: 0.3; }
