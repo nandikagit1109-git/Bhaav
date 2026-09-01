@@ -10,7 +10,7 @@ import {
   BookShelf, Window, FloatingPapers,
 } from './RoomObjects.jsx';
 import {
-  RhythmWall, SupportRoom, AnalysisZone,
+  RhythmWall, ReflectionSpace, SupportRoom, AnalysisZone,
   CampusPulse, SuggestionObject,
 } from './RoomAreas.jsx';
 import useGameStore from './gameStore';
