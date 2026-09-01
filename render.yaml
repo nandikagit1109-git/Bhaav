@@ -3,9 +3,7 @@ services:
     name: bhaav-api
     runtime: node
     plan: free
-    buildCommand: npm install
-    startCommand: node server.js
-    healthCheckPath: /health
+    dockerfilePath: Dockerfile
     envVars:
       - key: NODE_ENV
         value: production

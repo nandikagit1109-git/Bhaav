@@ -1,22 +1,16 @@
-FROM node:20-slim
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Install system deps for better-sqlite3
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+# Install build tools for better-sqlite3 native compilation
+RUN apt-get update && \
+    apt-get install -y python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy backend deps
 COPY package.json package-lock.json ./
-RUN npm install --production
+RUN npm install
 
-# Copy frontend dist (pre-built)
-COPY frontend/dist/ ./frontend/dist/
-
-# Copy backend source
-COPY server.js ./
-COPY db/ ./db/
-COPY lib/ ./lib/
-COPY routes/ ./routes/
+COPY . .
 
 EXPOSE $PORT
 
