@@ -22,30 +22,30 @@ import useGameStore from './gameStore';
 function RoomShell() {
   return (
     <group>
-      {/* Floor — warm dark wood */}
+      {/* Floor — warm wood, lighter */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#1a1410" roughness={0.75} metalness={0.05} />
+        <meshStandardMaterial color="#2a1e14" roughness={0.7} metalness={0.05} />
       </mesh>
-      {/* Back wall — warm charcoal */}
+      {/* Back wall — warm plaster */}
       <mesh position={[0, 1.5, -3]}>
         <planeGeometry args={[10, 3]} />
-        <meshStandardMaterial color="#1c1814" roughness={0.88} />
+        <meshStandardMaterial color="#2a2218" roughness={0.85} />
       </mesh>
       {/* Left wall */}
       <mesh position={[-4, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[8, 3]} />
-        <meshStandardMaterial color="#18140f" roughness={0.88} />
+        <meshStandardMaterial color="#241c14" roughness={0.85} />
       </mesh>
       {/* Right wall */}
       <mesh position={[4, 1.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[8, 3]} />
-        <meshStandardMaterial color="#18140f" roughness={0.88} />
+        <meshStandardMaterial color="#241c14" roughness={0.85} />
       </mesh>
       {/* Ceiling */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#0f0d0a" roughness={0.92} />
+        <meshStandardMaterial color="#1a1610" roughness={0.9} />
       </mesh>
     </group>
   );
@@ -236,7 +236,7 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
   }, [onWrite, onAnalysis, onReflection, onSupport, onDashboard]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#0a0806', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#141008', position: 'relative' }}>
       {loading && <LoadingScreen progress={loadProgress} />}
 
       <Canvas
@@ -247,8 +247,8 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
         onCreated={() => setLoadProgress(100)}
       >
         <Suspense fallback={null}>
-          <color attach="background" args={['#0a0806']} />
-          <fog attach="fog" args={['#0a0806', 1.5, 9]} />
+          <color attach="background" args={['#141008']} />
+          <fog attach="fog" args={['#141008', 2, 12]} />
 
           <FirstPersonControls
             moveSpeed={2.8}

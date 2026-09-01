@@ -1,46 +1,54 @@
 /**
- * Warm, home-like mood lighting.
- * Amber overhead, soft warm fill, gentle cool accent.
- * All static — zero per-frame cost.
+ * Brighter, warm home-like mood lighting.
+ * More ambient light + stronger point lights for visibility.
  */
 export default function MoodLighting() {
   return (
     <>
-      {/* Ambient — warm base fill */}
-      <ambientLight color="#2a1f14" intensity={0.18} />
+      {/* Ambient — brighter warm base */}
+      <ambientLight color="#3a2a1a" intensity={0.35} />
 
-      {/* Main overhead — warm amber desk lamp glow */}
+      {/* Main overhead — strong warm amber */}
       <pointLight
         position={[0.3, 2.6, 0.2]}
         color="#e8b060"
-        intensity={0.5}
-        distance={8}
+        intensity={1.2}
+        distance={10}
         decay={2}
       />
 
-      {/* Secondary warm — from the wall light strip */}
+      {/* Secondary warm — wall light strip side */}
       <pointLight
         position={[-2.5, 0.5, 0]}
         color="#c8956c"
-        intensity={0.2}
-        distance={5}
+        intensity={0.6}
+        distance={6}
         decay={2}
       />
 
-      {/* Fill — subtle cool from the window side */}
+      {/* Window side — cool daylight feel */}
       <pointLight
-        position={[3, 1.2, -0.5]}
-        color="#3a4a6a"
-        intensity={0.12}
-        distance={5}
+        position={[3, 1.8, -0.5]}
+        color="#6a8aaa"
+        intensity={0.5}
+        distance={7}
         decay={2}
       />
 
-      {/* Soft back fill — prevents total darkness */}
+      {/* Back fill — prevents dark corners */}
       <pointLight
         position={[0, 1.5, -2]}
-        color="#4a3a2a"
-        intensity={0.08}
+        color="#5a4a3a"
+        intensity={0.3}
+        distance={6}
+        decay={2}
+      />
+
+      {/* Floor bounce — subtle upward warmth */}
+      <pointLight
+        position={[0, 0.3, 0.5]}
+        color="#c8956c"
+        intensity={0.15}
         distance={4}
         decay={2}
       />

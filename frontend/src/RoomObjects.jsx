@@ -11,23 +11,23 @@ export const Desk = forwardRef(function Desk({ highlighted }, ref) {
     <group ref={ref} position={[0, 0, 0]}>
       <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.6, 0.04, 0.8]} />
-        <meshStandardMaterial color="#121010" roughness={0.85} />
+        <meshStandardMaterial color="#2a1e14" roughness={0.75} />
       </mesh>
       <mesh position={[-0.7, 0.3, -0.3]} castShadow>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#1a1816" roughness={0.8} />
+        <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
       <mesh position={[0.7, 0.3, -0.3]} castShadow>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#1a1816" roughness={0.8} />
+        <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
       <mesh position={[-0.7, 0.3, 0.3]} castShadow>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#1a1816" roughness={0.8} />
+        <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
       <mesh position={[0.7, 0.3, 0.3]} castShadow>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#1a1816" roughness={0.8} />
+        <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
     </group>
   );
@@ -119,7 +119,7 @@ export const DeskLamp = forwardRef(function DeskLamp({ highlighted }, ref) {
       </mesh>
       <mesh position={[0, 0.3, 0]}>
         <sphereGeometry args={[0.15, 8, 8]} />
-        <meshBasicMaterial color="#e8b060" transparent opacity={highlighted ? 0.12 : 0.04} />
+        <meshBasicMaterial color="#e8b060" transparent opacity={highlighted ? 0.18 : 0.08} />
       </mesh>
     </group>
   );
