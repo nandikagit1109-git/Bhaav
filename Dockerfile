@@ -2,13 +2,15 @@ FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Install build tools for better-sqlite3 native compilation
+# Install build tools for native module compilation
 RUN apt-get update && \
     apt-get install -y python3 make g++ && \
     rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
-RUN npm install
+
+# Force better-sqlite3 to compile from source (prebuilt binaries crash on Render)
+RUN npm install --build-from-source
 
 COPY . .
 
