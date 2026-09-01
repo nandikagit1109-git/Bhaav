@@ -6,3 +6,5 @@ node_modules/
 *.db-journal
 .freebuff/
 backend.env
+# Keep frontend/dist in git for Render deployment
+!frontend/dist/
