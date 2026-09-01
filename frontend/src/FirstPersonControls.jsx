@@ -3,15 +3,9 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 /**
- * FirstPersonControls
- *
- * Cinematic first-person controller for The Quiet Room.
- * - Click canvas to lock pointer
- * - WASD to walk with smooth acceleration/deceleration
- * - Mouse to look around (vertical clamped)
- * - Very subtle breathing motion (not head bob)
- * - ESC to release pointer lock
- * - Camera smoothing for cinematic feel
+ * FirstPersonControls — cinematic first-person controller.
+ * Click canvas to lock pointer. WASD to walk. Mouse to look. ESC to release.
+ * Smooth acceleration/deceleration, subtle breathing motion.
  */
 export default function FirstPersonControls({
   moveSpeed = 2.8,
@@ -20,8 +14,8 @@ export default function FirstPersonControls({
   friction = 6,
   breathFrequency = 0.4,
   breathAmplitude = 0.008,
-  initialPosition = [0, 1.6, 2.5],
-  bounds = { minX: -2.8, maxX: 2.8, minZ: -1.8, maxZ: 2.8 },
+  initialPosition = [0, 1.6, 2],
+  bounds = { minX: -3.5, maxX: 3.5, minZ: -3, maxZ: 3 },
   enabled = true,
 }) {
   const { camera, gl } = useThree();
@@ -35,16 +29,15 @@ export default function FirstPersonControls({
   const breathPhase = useRef(0);
   const cameraTarget = useRef(new THREE.Vector3(...initialPosition));
 
-  // Vertical rotation limits (±60° — no extreme looking up/down)
   const MAX_PITCH = Math.PI / 3;
   const MIN_PITCH = -Math.PI / 3;
 
-  // Set initial camera position
   useEffect(() => {
     camera.position.set(...initialPosition);
     camera.rotation.set(0, 0, 0);
-  }, [camera, initialPosition]);  // Pointer lock state tracking + ESC to release
-  // (Click-to-lock is handled by Crosshair component)
+  }, [camera, initialPosition]);
+
+  // Pointer lock state
   useEffect(() => {
     const canvas = gl.domElement;
 
@@ -75,10 +68,7 @@ export default function FirstPersonControls({
       euler.current.setFromQuaternion(camera.quaternion);
       euler.current.y -= e.movementX * lookSpeed;
       euler.current.x -= e.movementY * lookSpeed;
-
-      // Clamp vertical rotation
       euler.current.x = Math.max(MIN_PITCH, Math.min(MAX_PITCH, euler.current.x));
-
       camera.quaternion.setFromEuler(euler.current);
     };
 
@@ -106,7 +96,6 @@ export default function FirstPersonControls({
     const moving = KeyW || KeyA || KeyS || KeyD;
     const sprinting = ShiftLeft && moving;
 
-    // Build movement direction in camera space
     direction.current.set(0, 0, 0);
     if (KeyW) direction.current.z -= 1;
     if (KeyS) direction.current.z += 1;
@@ -114,36 +103,32 @@ export default function FirstPersonControls({
     if (KeyD) direction.current.x += 1;
     direction.current.normalize();
 
-    // Transform by camera yaw only (no pitch in movement)
     const yaw = euler.current.y;
     const sin = Math.sin(yaw);
     const cos = Math.cos(yaw);
     const worldX = direction.current.x * cos - direction.current.z * sin;
     const worldZ = direction.current.x * sin + direction.current.z * cos;
 
-    // Target velocity
     const speed = moving ? moveSpeed * (sprinting ? sprintMultiplier : 1) : 0;
     targetVelocity.current.set(worldX * speed, 0, worldZ * speed);
 
-    // Smooth acceleration / deceleration
     const lerpFactor = Math.min(delta * friction, 1);
     velocity.current.x += (targetVelocity.current.x - velocity.current.x) * lerpFactor;
     velocity.current.z += (targetVelocity.current.z - velocity.current.z) * lerpFactor;
 
-    // Apply to camera target
     cameraTarget.current.x += velocity.current.x * delta;
     cameraTarget.current.z += velocity.current.z * delta;
 
-    // Clamp to bounds
-    cameraTarget.current.x = Math.max(bounds.minX, Math.min(bounds.maxX, cameraTarget.current.x));
-    cameraTarget.current.z = Math.max(bounds.minZ, Math.min(bounds.maxZ, cameraTarget.current.z));
+    // Clamp to bounds (with wall margin)
+    const margin = 0.3;
+    cameraTarget.current.x = Math.max(bounds.minX + margin, Math.min(bounds.maxX - margin, cameraTarget.current.x));
+    cameraTarget.current.z = Math.max(bounds.minZ + margin, Math.min(bounds.maxZ - margin, cameraTarget.current.z));
 
-    // Subtle breathing motion (not head bob)
+    // Subtle breathing
     breathPhase.current += delta * breathFrequency;
     const breathY = Math.sin(breathPhase.current) * breathAmplitude;
     cameraTarget.current.y = initialPosition[1] + breathY;
 
-    // Smooth camera interpolation
     camera.position.lerp(cameraTarget.current, Math.min(delta * 12, 1));
   });
 
