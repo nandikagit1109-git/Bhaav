@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
@@ -13,6 +14,14 @@ const app = express();
 app.use(cors());
 
 app.use(express.json());
+
+
+// =====================================
+// SERVE FRONTEND BUILD
+// =====================================
+
+const frontendBuild = path.join(__dirname, "frontend", "dist");
+app.use(express.static(frontendBuild));
 
 
 // =====================================
@@ -96,28 +105,29 @@ app.use(
 // HEALTH CHECK
 // =====================================
 
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
 
   res.json({
     app: "Bhaav Backend",
-    status: "Running ",
+    status: "Running",
     version: "1.0"
   });
 
-});
-
-
+});// =====================================
+// 404 HANDLER — API returns JSON, everything else serves frontend
 // =====================================
-// 404 HANDLER
-// =====================================
+app.use((req, res, next) => {
 
-app.use((req, res) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({
+      success: false,
+      message: "Bhaav API route not found.",
+      path: req.originalUrl
+    });
+  }
 
-  res.status(404).json({
-    success: false,
-    message: "Bhaav API route not found.",
-    path: req.originalUrl
-  });
+  // For all non-API routes, serve the React app (SPA fallback)
+  res.sendFile(path.join(frontendBuild, "index.html"));
 
 });
 
