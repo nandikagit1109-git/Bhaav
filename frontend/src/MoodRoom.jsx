@@ -153,12 +153,13 @@ function InteractionLabel({ hoveredObject }) {
   return (
     <div style={{
       position: 'absolute', top: '50%', left: '50%',
-      transform: 'translate(-50%, calc(-50% + 24px))',
+      transform: 'translate(-50%, calc(-50% + 30px))',
       pointerEvents: 'none', textAlign: 'center',
+      background: 'rgba(0,0,0,0.3)', padding: '6px 16px', borderRadius: '4px',
     }}>
       <p style={{
-        fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '0.3em',
-        color: 'rgba(200,160,120,0.35)', textTransform: 'uppercase',
+        fontFamily: "'Inter', sans-serif", fontSize: '10px', letterSpacing: '0.25em',
+        color: 'rgba(200,160,120,0.6)', textTransform: 'uppercase', margin: 0,
       }}>[E] {labels[hoveredObject] || hoveredObject}</p>
     </div>
   );
@@ -207,20 +208,20 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
     return () => clearInterval(interval);
   }, []);
 
-  // Interactable definitions
+  // Interactable definitions — generous distances for easy detection
   const interactables = useMemo(() => [
-    { id: 'journal', ref: journalRef, maxDistance: 3 },
-    { id: 'lamp', ref: lampRef, maxDistance: 3 },
-    { id: 'radio', ref: radioRef, maxDistance: 3.5 },
-    { id: 'clock', ref: clockRef, maxDistance: 4 },
-    { id: 'bookshelf', ref: bookshelfRef, maxDistance: 4 },
-    { id: 'window', ref: windowRef, maxDistance: 4 },
-    { id: 'rhythmWall', ref: rhythmWallRef, maxDistance: 4 },
-    { id: 'reflection', ref: reflectionRef, maxDistance: 4 },
-    { id: 'support', ref: supportRef, maxDistance: 4 },
-    { id: 'analysis', ref: analysisRef, maxDistance: 4 },
-    { id: 'campus', ref: campusRef, maxDistance: 4 },
-    { id: 'suggestion', ref: suggestionRef, maxDistance: 3 },
+    { id: 'journal', ref: journalRef, maxDistance: 5 },
+    { id: 'lamp', ref: lampRef, maxDistance: 5 },
+    { id: 'radio', ref: radioRef, maxDistance: 5 },
+    { id: 'clock', ref: clockRef, maxDistance: 5 },
+    { id: 'bookshelf', ref: bookshelfRef, maxDistance: 5 },
+    { id: 'window', ref: windowRef, maxDistance: 5 },
+    { id: 'rhythmWall', ref: rhythmWallRef, maxDistance: 5 },
+    { id: 'reflection', ref: reflectionRef, maxDistance: 5 },
+    { id: 'support', ref: supportRef, maxDistance: 5 },
+    { id: 'analysis', ref: analysisRef, maxDistance: 5 },
+    { id: 'campus', ref: campusRef, maxDistance: 5 },
+    { id: 'suggestion', ref: suggestionRef, maxDistance: 5 },
   ], []);
 
   // E-key interaction — all features connected
@@ -330,7 +331,7 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
         }}>
           <p style={{
             fontFamily: "'Inter', sans-serif", fontSize: '8px', letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: 'rgba(200,160,120,0.1)',
+            textTransform: 'uppercase', color: 'rgba(200,160,120,0.15)',
           }}>click to look · wasd to move · e to interact · esc to release</p>
         </div>
       </div>

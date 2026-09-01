@@ -43,19 +43,10 @@ export default function FirstPersonControls({
   useEffect(() => {
     camera.position.set(...initialPosition);
     camera.rotation.set(0, 0, 0);
-  }, [camera, initialPosition]);
-
-  // Pointer lock
-  const handleCanvasClick = useCallback(() => {
-    if (!enabled) return;
-    if (!isLocked.current) {
-      gl.domElement.requestPointerLock();
-    }
-  }, [gl, enabled]);
-
+  }, [camera, initialPosition]);  // Pointer lock state tracking + ESC to release
+  // (Click-to-lock is handled by Crosshair component)
   useEffect(() => {
     const canvas = gl.domElement;
-    canvas.addEventListener('click', handleCanvasClick);
 
     const onLockChange = () => {
       isLocked.current = document.pointerLockElement === canvas;
@@ -71,11 +62,10 @@ export default function FirstPersonControls({
     document.addEventListener('keydown', onKeyDown);
 
     return () => {
-      canvas.removeEventListener('click', handleCanvasClick);
       document.removeEventListener('pointerlockchange', onLockChange);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [gl, handleCanvasClick, enabled]);
+  }, [gl]);
 
   // Mouse look
   useEffect(() => {
