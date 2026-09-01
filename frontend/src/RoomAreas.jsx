@@ -171,20 +171,11 @@ export const CampusPulse = forwardRef(function CampusPulse({ campusData, highlig
 // SUGGESTION OBJECT
 // ========================================
 export const SuggestionObject = forwardRef(function SuggestionObject({ suggestion, highlighted }, ref) {
-  const paperRef = useRef();
-
-  useFrame((state) => {
-    if (paperRef.current) {
-      paperRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
-      paperRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.02;
-    }
-  });
-
   if (!suggestion) return null;
 
   return (
     <group ref={ref} position={[1.5, 1.0, -0.5]}>
-      <group ref={paperRef}>
+      <group>
         <mesh>
           <planeGeometry args={[0.15, 0.2]} />
           <meshStandardMaterial color="#1a1816" emissive="#c8956c" emissiveIntensity={highlighted ? 0.4 : 0.1} roughness={0.8} side={THREE.DoubleSide} />

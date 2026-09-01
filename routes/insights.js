@@ -93,15 +93,12 @@ if (existing) {
 
 
     if (sessions.length === 0) {
-
-      res.json({
-  insight_id: insightId,
-  week_start: weekStart,
-  observation: aiResult.observation,
-  suggestion: aiResult.suggestion,
-  followup_check: aiResult.followup_check
-});
-
+      return res.json({
+        week_start: weekStart,
+        observation: "Bhaav is still learning your writing pattern.",
+        suggestion: "Complete a few more writing sessions to build your personal rhythm.",
+        followup_check: null
+      });
     }
 
 

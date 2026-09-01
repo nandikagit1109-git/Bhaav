@@ -19,7 +19,7 @@ export default function Crosshair({ interactables = [], onInteract }) {
 
   useFrame(() => {
     frameCount.current++;
-    if (frameCount.current % 3 !== 0) return; // Only every 3rd frame
+    if (frameCount.current % 5 !== 0) return; // Only every 5th frame
     if (!interactables.length) return;
 
     _dir.set(0, 0, -1).applyQuaternion(camera.quaternion);

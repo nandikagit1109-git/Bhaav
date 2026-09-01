@@ -51,7 +51,7 @@ function RoomShell() {
 // ========================================
 function DustParticles() {
   const ref = useRef();
-  const count = 120;
+  const count = 50;
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -62,13 +62,17 @@ function DustParticles() {
     return arr;
   }, []);
 
+  // Update every 3rd frame to reduce CPU cost
+  const frameCount = useRef(0);
   useFrame((state) => {
+    frameCount.current++;
+    if (frameCount.current % 3 !== 0) return;
     if (!ref.current) return;
     const arr = ref.current.geometry.attributes.position.array;
     const t = state.clock.elapsedTime;
     for (let i = 0; i < count; i++) {
-      arr[i * 3 + 1] += Math.sin(t * 0.08 + i * 0.5) * 0.0003;
-      arr[i * 3] += Math.cos(t * 0.05 + i * 0.3) * 0.0001;
+      arr[i * 3 + 1] += Math.sin(t * 0.08 + i * 0.5) * 0.001;
+      arr[i * 3] += Math.cos(t * 0.05 + i * 0.3) * 0.0003;
       if (arr[i * 3 + 1] > 3) arr[i * 3 + 1] = 0;
     }
     ref.current.geometry.attributes.position.needsUpdate = true;
@@ -155,11 +159,11 @@ function CenteredInkWave() {
           transition={{ pathLength: { duration: 3.5, ease: [0.6, 0.05, -0.01, 0.9], delay: 0.3 }, opacity: { duration: 2, delay: 0.3 } }}
         />
         <motion.circle cx="900" cy="50" r="3" fill="#c8956c"
-          animate={{ r: [2.5, 4, 2.5], opacity: [0.6, 1, 0.6] }}
+          animate={{ scale: [0.85, 1.3, 0.85], opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.circle cx="900" cy="50" r="8" fill="#c8956c"
-          animate={{ r: [6, 12, 6], opacity: [0.1, 0.25, 0.1] }}
+          animate={{ scale: [0.75, 1.5, 0.75], opacity: [0.1, 0.25, 0.1] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         />
       </motion.svg>
@@ -286,8 +290,9 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
       {loading && <LoadingScreen progress={loadProgress} />}
 
       <Canvas
-        camera={{ position: [0, 1.6, 2.5], fov: 55, near: 0.1, far: 100 }}
-        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
+        camera={{ position: [0, 1.6, 2.5], fov: 55, near: 0.1, far: 50 }}
+        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false }}
+        dpr={[1, 1.5]}
         style={{ position: 'absolute', top: 0, left: 0 }}
         onCreated={() => setLoadProgress(100)}
       >

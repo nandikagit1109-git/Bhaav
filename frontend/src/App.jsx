@@ -29,6 +29,7 @@ function App() {
   // =========================================
   const [page, setPage] = useState("entry");
   const setGameState = useGameStore((s) => s.setGameState);
+  const setSessionActive = useGameStore((s) => s.setSessionActive);
   const setSessionCount = useGameStore((s) => s.setSessionCount);
   const setAnalysis = useGameStore((s) => s.setAnalysis);
   const setInsight = useGameStore((s) => s.setInsight);
@@ -111,10 +112,11 @@ function App() {
     keystrokes.current = [];
     setText("");
     setIsSessionActive(true);
+    setSessionActive(true);
     setMessage("");
     setPage("journal");
     setGameState("journal");
-  }, [setGameState]);
+  }, [setGameState, setSessionActive]);
 
   // =========================================
   // RECORD KEYSTROKE
@@ -154,49 +156,54 @@ function App() {
     const userId = localStorage.getItem("bhaav_user_id");
     if (!userId || !sessionStart.current) return;
 
-    setSavingSession(true);
-    setMessage("Observing your rhythm...");
+    // Capture refs before clearing
+    const savedStart = sessionStart.current;
+    const savedEvents = [...keystrokes.current];
 
+    // Reset session state immediately
+    setIsSessionActive(false);
+    setSessionActive(false);
+    sessionStart.current = null;
+    keystrokes.current = [];
+    liveMetricsRef.current = { typingSpeed: 0, pauseDuration: 0, backspaceRate: 0, activityLevel: 0 };
+
+    // Navigate to room immediately — don't block on save
+    setPage("room");
+    setGameState("world");
+
+    // Save session in background (non-blocking)
     try {
-      const events = [...keystrokes.current];
       const data = await submitSession({
         user_id: userId,
-        start_ts: sessionStart.current,
+        start_ts: savedStart,
         end_ts: endTs,
-        keystroke_events: events,
+        keystroke_events: savedEvents,
       });
 
       if (data.intervention) setIntervention(data.intervention);
       else setIntervention(null);
 
-      setIsSessionActive(false);
-      setSavingSession(false);
-      sessionStart.current = null;
-      keystrokes.current = [];
-      liveMetricsRef.current = { typingSpeed: 0, pauseDuration: 0, backspaceRate: 0, activityLevel: 0 };
-
       setRefreshKey(v => v + 1);
 
-      // Refresh data
-      const [analysisRes, insightRes] = await Promise.allSettled([
+      // Refresh data in background — fire and forget
+      Promise.allSettled([
         getAnalysis(userId),
         getInsight(userId),
-      ]);
-      if (analysisRes.status === "fulfilled") {
-        setAnalysis(analysisRes.value);
-        setSessions(analysisRes.value.sessions || []);
-        setSessionCount(analysisRes.value.session_count || 0);
-      }
-      if (insightRes.status === "fulfilled") setInsight(insightRes.value);
+      ]).then(([analysisRes, insightRes]) => {
+        if (analysisRes.status === "fulfilled") {
+          setAnalysis(analysisRes.value);
+          setSessions(analysisRes.value.sessions || []);
+          setSessionCount(analysisRes.value.session_count || 0);
+        }
+        if (insightRes.status === "fulfilled") setInsight(insightRes.value);
+      }).catch(() => {});
 
-      setPage("room");
-      setGameState("world");
     } catch (error) {
-      console.error("Session error:", error);
-      setSavingSession(false);
-      setMessage("Could not save. Please try again.");
+      console.error("Session save error:", error);
+      // Still show message but user is already in the room
+      setMessage("Session could not be saved.");
     }
-  }, [isSessionActive, savingSession, setGameState, setAnalysis, setSessions, setSessionCount, setInsight, setIntervention]);
+  }, [isSessionActive, savingSession, setGameState, setSessionActive, setAnalysis, setSessions, setSessionCount, setInsight, setIntervention]);
 
   // =========================================
   // NAVIGATION

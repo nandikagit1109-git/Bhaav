@@ -1,16 +1,74 @@
-# React + Vite
+# Bhaav Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+An immersive 3D narrative journal — a quiet digital space that learns the rhythm of how you write.
 
-Currently, two official plugins are available:
+## The Experience
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Bhaav is NOT a conventional web app. It is an interactive digital art experience where:
 
-## React Compiler
+- Your typing rhythm becomes the environment
+- Pauses become stillness  
+- Sessions become memory
+- The data becomes the landscape
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the Oxlint configuration
+- React 19
+- Vite
+- React Three Fiber (3D)
+- Three.js
+- @react-three/drei
+- Framer Motion
+- Zustand
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+The app runs on `http://localhost:5173` and connects to the backend on `http://localhost:4000`.
+
+## Environment Variables
+
+Copy `.env.example` to `.env`:
+
+```bash
+VITE_API_BASE_URL=http://localhost:4000
+```
+
+## Architecture
+
+```
+src/
+├── App.jsx              # Root — game state machine
+├── api.js               # Centralized API client
+├── gameStore.js         # Zustand state
+├── EntryExperience.jsx  # Original 2D landing
+├── RoomEntry.jsx        # 3D cinematic entry
+├── MoodRoom.jsx         # Main 3D environment
+├── RoomJournal.jsx      # Writing mode
+├── RoomObjects.jsx      # 3D furniture + interactables
+├── RoomAreas.jsx        # Rhythm Wall, Reflection, Support, etc.
+├── FirstPersonControls.jsx  # WASD + mouse look
+├── Crosshair.jsx        # Raycast interaction system
+├── MoodLighting.jsx     # Dynamic mood-reactive lighting
+├── InkLine.jsx          # Live-reacting SVG ink line
+├── InkCloud.jsx         # Entry scene ink cloud
+├── Dashboard.jsx        # 2D analysis dashboard
+└── AdminDashboard.jsx   # Campus Pulse admin view
+```
+
+## Privacy
+
+Bhaav NEVER stores or transmits journal text. Only keystroke metadata is captured:
+
+- Key type (char, space, backspace, enter)
+- Timestamp
+
+All analysis is performed on aggregated behavioral patterns, never content.
+
+## License
+
+MIT
