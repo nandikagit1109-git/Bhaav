@@ -2,15 +2,11 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
-COPY package*.json ./
-RUN npm install
-
-# Copy source
+# Copy everything (frontend/dist is pre-built)
 COPY . .
 
-# Build frontend if it exists
-RUN if [ -d "frontend" ]; then cd frontend && npm install && npm run build; fi
+# Install backend dependencies only
+RUN npm install --omit=dev
 
 EXPOSE 4000
 
