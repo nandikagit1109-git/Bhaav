@@ -6,13 +6,12 @@ import FirstPersonControls from './FirstPersonControls.jsx';
 import Crosshair from './Crosshair.jsx';
 import MoodLighting from './MoodLighting.jsx';
 import {
-  Desk, Chair, Journal, DeskLamp, Radio, WallClock,
-  BookShelf, Window, WallArt, PottedPlant, WallLightStrip,
-  FloatingPapers,
+  Desk, Journal, DeskLamp, WallClock,
+  BookShelf, Window, FloatingPapers,
 } from './RoomObjects.jsx';
 import {
-  RhythmWall, ReflectionSpace, SupportRoom, AnalysisZone,
-  CampusPulse, SuggestionObject, SessionMemory,
+  RhythmWall, SupportRoom, AnalysisZone,
+  CampusPulse, SuggestionObject,
 } from './RoomAreas.jsx';
 import useGameStore from './gameStore';
 
@@ -22,25 +21,15 @@ import useGameStore from './gameStore';
 function RoomShell() {
   return (
     <group>
-      {/* Floor — warm wood, lighter */}
+      {/* Floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[10, 8]} />
         <meshStandardMaterial color="#2a1e14" roughness={0.7} metalness={0.05} />
       </mesh>
-      {/* Back wall — warm plaster */}
+      {/* Back wall */}
       <mesh position={[0, 1.5, -3]}>
         <planeGeometry args={[10, 3]} />
         <meshStandardMaterial color="#2a2218" roughness={0.85} />
-      </mesh>
-      {/* Left wall */}
-      <mesh position={[-4, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[8, 3]} />
-        <meshStandardMaterial color="#241c14" roughness={0.85} />
-      </mesh>
-      {/* Right wall */}
-      <mesh position={[4, 1.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <planeGeometry args={[8, 3]} />
-        <meshStandardMaterial color="#241c14" roughness={0.85} />
       </mesh>
       {/* Ceiling */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
@@ -51,30 +40,7 @@ function RoomShell() {
   );
 }
 
-// ========================================
-// DUST PARTICLES — STATIC
-// ========================================
-function DustParticles() {
-  const positions = useMemo(() => {
-    const count = 30;
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 8;
-      arr[i * 3 + 1] = Math.random() * 3;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 6;
-    }
-    return arr;
-  }, []);
 
-  return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={30} array={positions} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial color="#e8d8c0" size={0.005} transparent opacity={0.12} sizeAttenuation />
-    </points>
-  );
-}
 
 // ========================================
 // LOADING SCREEN
@@ -182,7 +148,7 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
   // Refs for interactable objects
   const journalRef = useRef();
   const lampRef = useRef();
-  const radioRef = useRef();
+
   const clockRef = useRef();
   const bookshelfRef = useRef();
   const windowRef = useRef();
@@ -212,7 +178,7 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
   const interactables = useMemo(() => [
     { id: 'journal', ref: journalRef, maxDistance: 5 },
     { id: 'lamp', ref: lampRef, maxDistance: 5 },
-    { id: 'radio', ref: radioRef, maxDistance: 5 },
+
     { id: 'clock', ref: clockRef, maxDistance: 5 },
     { id: 'bookshelf', ref: bookshelfRef, maxDistance: 5 },
     { id: 'window', ref: windowRef, maxDistance: 5 },
@@ -266,10 +232,8 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
 
           {/* === WRITING AREA === */}
           <Desk highlighted={false} />
-          <Chair />
           <Journal ref={journalRef} highlighted={hoveredObject === 'journal'} />
           <DeskLamp ref={lampRef} highlighted={hoveredObject === 'lamp'} />
-          <PottedPlant />
 
           {/* === RHYTHM WALL === */}
           <RhythmWall ref={rhythmWallRef} sessions={sessions} highlighted={hoveredObject === 'rhythmWall'} />
@@ -290,15 +254,10 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
           <SuggestionObject ref={suggestionRef} suggestion={insight?.suggestion} highlighted={hoveredObject === 'suggestion'} />
 
           {/* === DECOR === */}
-          <Radio ref={radioRef} highlighted={hoveredObject === 'radio'} />
           <WallClock ref={clockRef} highlighted={hoveredObject === 'clock'} />
           <BookShelf ref={bookshelfRef} highlighted={hoveredObject === 'bookshelf'} />
           <Window ref={windowRef} highlighted={hoveredObject === 'window'} />
-          <WallArt />
-          <WallLightStrip />
           <FloatingPapers />
-          <SessionMemory sessionCount={sessionCount} />
-          <DustParticles />
         </Suspense>
       </Canvas>
 

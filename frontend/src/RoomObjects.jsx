@@ -9,23 +9,23 @@ import * as THREE from 'three';
 export const Desk = forwardRef(function Desk({ highlighted }, ref) {
   return (
     <group ref={ref} position={[0, 0, 0]}>
-      <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.6, 0]}>
         <boxGeometry args={[1.6, 0.04, 0.8]} />
         <meshStandardMaterial color="#2a1e14" roughness={0.75} />
       </mesh>
-      <mesh position={[-0.7, 0.3, -0.3]} castShadow>
+      <mesh position={[-0.7, 0.3, -0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
         <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
-      <mesh position={[0.7, 0.3, -0.3]} castShadow>
+      <mesh position={[0.7, 0.3, -0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
         <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
-      <mesh position={[-0.7, 0.3, 0.3]} castShadow>
+      <mesh position={[-0.7, 0.3, 0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
         <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
-      <mesh position={[0.7, 0.3, 0.3]} castShadow>
+      <mesh position={[0.7, 0.3, 0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
         <meshStandardMaterial color="#2a2018" roughness={0.75} />
       </mesh>
@@ -185,7 +185,7 @@ export const WallClock = forwardRef(function WallClock({ highlighted }, ref) {
 // ========================================
 export function FloatingPapers() {
   const papers = useMemo(() => {
-    return Array.from({ length: 5 }, (_, i) => ({
+    return Array.from({ length: 3 }, (_, i) => ({
       id: i,
       pos: [(Math.random() - 0.5) * 3, 0.5 + Math.random() * 2, (Math.random() - 0.5) * 2 - 1],
       rot: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI],
@@ -209,7 +209,7 @@ export function FloatingPapers() {
 // ========================================
 export const BookShelf = forwardRef(function BookShelf({ clutterLevel = 0, highlighted }, ref) {
   const books = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => ({
+    return Array.from({ length: 4 }, (_, i) => ({
       id: i,
       x: -0.4 + i * 0.16,
       height: 0.22 + Math.random() * 0.18,
