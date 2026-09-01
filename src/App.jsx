@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 import "./App.css";
 
@@ -11,6 +10,8 @@ import RoomJournal from "./RoomJournal.jsx";
 import useGameStore from "./gameStore.js";
 import { createUser, submitSession, getAnalysis, getInsight, getCampusPulse } from "./api.js";
 
+let initializationPromise = null;
+
 // ========================================
 // WebGL DETECTION
 // ========================================
@@ -18,7 +19,7 @@ function detectWebGL() {
   try {
     const canvas = document.createElement("canvas");
     return !!(window.WebGLRenderingContext && (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -29,6 +30,7 @@ function App() {
   // =========================================
   const [page, setPage] = useState("entry");
   const setGameState = useGameStore((s) => s.setGameState);
+  const setSessionActive = useGameStore((s) => s.setSessionActive);
   const setSessionCount = useGameStore((s) => s.setSessionCount);
   const setAnalysis = useGameStore((s) => s.setAnalysis);
   const setInsight = useGameStore((s) => s.setInsight);
@@ -44,10 +46,12 @@ function App() {
   const [intervention, setIntervention] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [savingSession, setSavingSession] = useState(false);
+  const savingSessionRef = useRef(false);
 
   const sessionStart = useRef(null);
   const keystrokes = useRef([]);
   const liveMetricsRef = useRef({ typingSpeed: 0, pauseDuration: 0, backspaceRate: 0, activityLevel: 0 });
+  const keystrokeCounters = useRef({ charCount: 0, backspaceCount: 0, totalCount: 0 });
 
   // =========================================
   // WEBGL CHECK
@@ -57,9 +61,34 @@ function App() {
   // =========================================
   // USER INIT + DATA FETCH
   // =========================================
+  // Handles fresh backend deployments (e.g. Render) where the old
+  // localStorage user ID no longer exists in the database.
   useEffect(() => {
+    if (initializationPromise) return;
+    initializationPromise = Promise.resolve();
+
     async function init() {
       let userId = localStorage.getItem("bhaav_user_id");
+      let existingAnalysis = null;
+
+      // If we have a stored user, verify it exists on the backend
+      if (userId) {
+        try {
+          const analysisRes = await getAnalysis(userId);
+          existingAnalysis = analysisRes;
+          setAnalysis(analysisRes);
+          setSessions(analysisRes.sessions || []);
+          setSessionCount(analysisRes.session_count || 0);
+        } catch (e) {
+          // User not found on backend — clear stale ID and create new
+          if (e.message && e.message.includes("not found")) {
+            localStorage.removeItem("bhaav_user_id");
+            userId = null;
+          }
+        }
+      }
+
+      // No valid user — create one
       if (!userId) {
         try {
           const data = await createUser();
@@ -72,9 +101,10 @@ function App() {
         }
       }
 
+      // Fetch remaining data if we have a valid user
       if (userId) {
         const [analysisRes, insightRes, campusRes] = await Promise.allSettled([
-          getAnalysis(userId),
+          existingAnalysis ? Promise.resolve(existingAnalysis) : getAnalysis(userId),
           getInsight(userId),
           getCampusPulse(),
         ]);
@@ -89,7 +119,7 @@ function App() {
       }
     }
     init();
-  }, []);
+  }, [setAnalysis, setCampusData, setInsight, setSessionCount, setSessions]);
 
   // =========================================
   // START SESSION
@@ -109,16 +139,21 @@ function App() {
 
     sessionStart.current = Date.now();
     keystrokes.current = [];
+    keystrokeCounters.current = { charCount: 0, backspaceCount: 0, totalCount: 0 };
     setText("");
     setIsSessionActive(true);
+    setSessionActive(true);
     setMessage("");
     setPage("journal");
     setGameState("journal");
-  }, [setGameState]);
+  }, [setGameState, setSessionActive]);
 
   // =========================================
   // RECORD KEYSTROKE
   // =========================================
+  // PERFORMANCE: Uses O(1) running counters instead of Array.filter()
+  // on every keystroke. The old code iterated the entire events array
+  // twice per keystroke — O(n) per keystroke, causing increasing lag.
   const recordKeystroke = useCallback((event) => {
     if (!isSessionActive) return;
 
@@ -129,18 +164,21 @@ function App() {
 
     keystrokes.current.push({ key_type: keyType, timestamp_ms: Date.now() });
 
-    // Update live metrics
+    // O(1) counter updates instead of O(n) Array.filter
+    const counters = keystrokeCounters.current;
+    counters.totalCount++;
+    if (keyType === "char" || keyType === "space") counters.charCount++;
+    if (keyType === "backspace") counters.backspaceCount++;
+
+    // Update live metrics — O(1) computation
     const now = Date.now();
     const elapsed = (now - (sessionStart.current || now)) / 1000;
     if (elapsed > 0) {
-      const events = keystrokes.current;
-      const charCount = events.filter(e => e.key_type === "char" || e.key_type === "space").length;
-      const backspaces = events.filter(e => e.key_type === "backspace").length;
       liveMetricsRef.current = {
-        typingSpeed: charCount / 5 / (elapsed / 60),
+        typingSpeed: counters.charCount / 5 / (elapsed / 60),
         pauseDuration: 0,
-        backspaceRate: events.length > 0 ? backspaces / events.length : 0,
-        activityLevel: Math.min(1, charCount / 50),
+        backspaceRate: counters.totalCount > 0 ? counters.backspaceCount / counters.totalCount : 0,
+        activityLevel: Math.min(1, counters.charCount / 50),
       };
     }
   }, [isSessionActive]);
@@ -149,54 +187,65 @@ function App() {
   // END SESSION
   // =========================================
   const endSession = useCallback(async () => {
-    if (!isSessionActive || savingSession) return;
+    if (!isSessionActive || savingSessionRef.current) return;
+    savingSessionRef.current = true;
+    setSavingSession(true);
     const endTs = Date.now();
     const userId = localStorage.getItem("bhaav_user_id");
     if (!userId || !sessionStart.current) return;
 
-    setSavingSession(true);
-    setMessage("Observing your rhythm...");
+    // Capture refs before clearing
+    const savedStart = sessionStart.current;
+    const savedEvents = [...keystrokes.current];
 
+    // Reset session state immediately
+    setIsSessionActive(false);
+    setSessionActive(false);
+    sessionStart.current = null;
+    keystrokes.current = [];
+    keystrokeCounters.current = { charCount: 0, backspaceCount: 0, totalCount: 0 };
+    liveMetricsRef.current = { typingSpeed: 0, pauseDuration: 0, backspaceRate: 0, activityLevel: 0 };
+
+    // Navigate to room immediately — don't block on save
+    setPage("room");
+    setGameState("world");
+
+    // Save session in background (non-blocking)
     try {
-      const events = [...keystrokes.current];
       const data = await submitSession({
         user_id: userId,
-        start_ts: sessionStart.current,
+        start_ts: savedStart,
         end_ts: endTs,
-        keystroke_events: events,
+        keystroke_events: savedEvents,
       });
 
       if (data.intervention) setIntervention(data.intervention);
       else setIntervention(null);
 
-      setIsSessionActive(false);
-      setSavingSession(false);
-      sessionStart.current = null;
-      keystrokes.current = [];
-      liveMetricsRef.current = { typingSpeed: 0, pauseDuration: 0, backspaceRate: 0, activityLevel: 0 };
-
       setRefreshKey(v => v + 1);
 
-      // Refresh data
-      const [analysisRes, insightRes] = await Promise.allSettled([
+      // Refresh data in background — fire and forget
+      Promise.allSettled([
         getAnalysis(userId),
         getInsight(userId),
-      ]);
-      if (analysisRes.status === "fulfilled") {
-        setAnalysis(analysisRes.value);
-        setSessions(analysisRes.value.sessions || []);
-        setSessionCount(analysisRes.value.session_count || 0);
-      }
-      if (insightRes.status === "fulfilled") setInsight(insightRes.value);
+      ]).then(([analysisRes, insightRes]) => {
+        if (analysisRes.status === "fulfilled") {
+          setAnalysis(analysisRes.value);
+          setSessions(analysisRes.value.sessions || []);
+          setSessionCount(analysisRes.value.session_count || 0);
+        }
+        if (insightRes.status === "fulfilled") setInsight(insightRes.value);
+      }).catch(() => {});
 
-      setPage("room");
-      setGameState("world");
     } catch (error) {
-      console.error("Session error:", error);
+      console.error("Session save error:", error);
+      // Still show message but user is already in the room
+      setMessage("Session could not be saved.");
+    } finally {
+      savingSessionRef.current = false;
       setSavingSession(false);
-      setMessage("Could not save. Please try again.");
     }
-  }, [isSessionActive, savingSession, setGameState, setAnalysis, setSessions, setSessionCount, setInsight, setIntervention]);
+  }, [isSessionActive, setGameState, setSessionActive, setAnalysis, setSessions, setSessionCount, setInsight, setIntervention]);
 
   // =========================================
   // NAVIGATION
@@ -258,7 +307,6 @@ function App() {
         onEnd={endSession}
         savingSession={savingSession}
         message={message}
-        liveMetrics={liveMetricsRef.current}
       />
     );
   }

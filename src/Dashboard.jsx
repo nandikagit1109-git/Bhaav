@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { getAnalysis, submitFeedback } from "./api.js";
+import { getAnalysis, getInsight } from "./api.js";
 
-const EASE = [0.6, 0.05, -0.01, 0.9];
+const EASE = [0.6, 0.05, 0.01, 0.9];
 
 function formatDuration(seconds = 0) {
   const total = Math.max(0, Math.round(seconds));
@@ -82,8 +82,11 @@ function Dashboard({
   const [breathing, setBreathing] =
     useState(false);
 
-  const [feedbackSent, setFeedbackSent] =
+  const [showAdvice, setShowAdvice] =
     useState(false);
+
+  const [adviceText, setAdviceText] =
+    useState("");
 
   const userId =
     localStorage.getItem(
@@ -110,24 +113,25 @@ function Dashboard({
       }
 
       try {
-        const data = await getAnalysis(userId);
-        console.log("Bhaav full analysis:", data);
-        setAnalysis(data);
+        const [analysisData, insightData] = await Promise.allSettled([
+          getAnalysis(userId),
+          getInsight(userId),
+        ]);
+        if (analysisData.status === 'fulfilled') {
+          const d = analysisData.value;
+          // Merge insight fields into analysis for the template
+          if (insightData.status === 'fulfilled') {
+            d.reflection = insightData.value.observation || null;
+            d.suggestion = insightData.value.suggestion || null;
+          }
+          setAnalysis(d);
+        } else {
+          setError(analysisData.reason?.message || 'Analysis unavailable');
+        }
       } catch (error) {
-
-        console.error(
-          "Analysis error:",
-          error
-        );
-
-        setError(
-          error.message
-        );
-
+        setError(error.message);
       } finally {
-
         setLoading(false);
-
       }
 
     }
@@ -136,40 +140,6 @@ function Dashboard({
     loadAnalysis();
 
   }, [userId]);
-
-
-  // =========================================
-  // FEEDBACK
-  // =========================================
-
-  async function sendFeedback(feedback) {
-
-    if (
-      !analysis?.latest_session
-    ) {
-      return;
-    }
-
-    /*
-      We keep feedback optional here.
-
-      Your existing insight endpoint remains
-      responsible for generated reflections.
-    */
-
-    try {
-      await submitFeedback(userId, null, feedback);
-      setFeedbackSent(true);
-    } catch (error) {
-
-      console.error(
-        "Feedback error:",
-        error
-      );
-
-    }
-
-  }
 
 
   // =========================================
@@ -303,14 +273,8 @@ function Dashboard({
   const baseline =
     analysis.baseline;
 
-  const comparison =
-    analysis.comparison;
-
   const sessions =
     analysis.sessions || [];
-
-  const trend =
-    analysis.trend || {};
 
 
   const wpm =
@@ -995,27 +959,116 @@ function Dashboard({
 
 
       {/* =====================================
+          WEEKLY REFLECTION
+      ===================================== */}
+
+      {analysis?.reflection && (
+        <section className="analysis-section reflection-section">
+
+          <div className="card-label">
+            WEEKLY REFLECTION
+          </div>
+
+          <div className="reflection-body">
+            <p className="reflection-text">
+              {analysis.reflection}
+            </p>
+          </div>
+
+        </section>
+      )}
+
+
+      {/* =====================================
+          SUGGESTION
+      ===================================== */}
+
+      {analysis?.suggestion && (
+        <section className="analysis-section suggestion-section">
+
+          <div className="card-label">
+            A SMALL GENTLE NOTE
+          </div>
+
+          <div className="suggestion-body">
+            <p className="suggestion-text">
+              {analysis.suggestion}
+            </p>
+          </div>
+
+        </section>
+      )}
+
+
+      {/* =====================================
+          NEED ADVICE?
+      ===================================== */}
+
+      <section className="analysis-section advice-section">
+
+        <div className="card-label">
+          SOMETHING ON YOUR MIND?
+        </div>
+
+        <div className="advice-body">
+          <p className="advice-intro">
+            Sometimes it helps to put a question into words.
+            Bhaav can offer a gentle reflection based on your
+            writing rhythm — not a diagnosis, just an observation.
+          </p>
+
+          {!showAdvice ? (
+            <button
+              className="advice-trigger"
+              onClick={() => setShowAdvice(true)}
+            >
+              ask about something →
+            </button>
+          ) : (
+            <div className="advice-prompt">
+              <textarea
+                className="advice-input"
+                placeholder="what's on your mind?"
+                value={adviceText}
+                onChange={(e) => setAdviceText(e.target.value)}
+                rows={3}
+              />
+              <div className="advice-actions">
+                <button
+                  className="support-primary"
+                  onClick={() => {
+                    /* Placeholder — connects to AI insight */
+                    setAdviceText("");
+                    setShowAdvice(false);
+                  }}
+                >
+                  reflect
+                </button>
+                <button
+                  className="support-secondary"
+                  onClick={() => { setShowAdvice(false); setAdviceText(""); }}
+                >
+                  not now
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+      </section>
+
+
+      {/* =====================================
           PRIVACY
       ===================================== */}
 
       <section className="privacy-note">
 
-        <span>
-          🔒
-        </span>
-
+        <span>🔒</span>
 
         <div>
-
-          <strong>
-            Your words stay yours.
-          </strong>
-
-          <p>
-            Bhaav analyzes typing patterns,
-            not journal content.
-          </p>
-
+          <strong>Your words stay yours.</strong>
+          <p>Bhaav only observes your typing rhythm — never your content.</p>
         </div>
 
       </section>
@@ -1041,6 +1094,8 @@ function Dashboard({
       >
         Write in your journal →
       </motion.button>
+
+      <div style={{ height: '10vh' }} />
 
     </motion.main>
   );

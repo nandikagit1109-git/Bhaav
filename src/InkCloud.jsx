@@ -5,12 +5,7 @@ import {
   useTransform
 } from "framer-motion";
 
-function InkCloud({
-  typingSpeed = 0.5,
-  backspaceRate = 0.1,
-  pauseFrequency = 0.3,
-  active = false
-}) {
+function InkCloud({ active = false }) {
 
   // =========================================
   // MOUSE
@@ -151,7 +146,7 @@ function InkCloud({
               ease: [
                 0.6,
                 0.05,
-                -0.01,
+                0.01,
                 0.9
               ]
             },
@@ -161,7 +156,7 @@ function InkCloud({
               ease: [
                 0.6,
                 0.05,
-                -0.01,
+                0.01,
                 0.9
               ]
             }

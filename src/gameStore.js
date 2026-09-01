@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const useGameStore = create((set, get) => ({
+const useGameStore = create((set) => ({
   // ========================================
   // GAME STATE MACHINE
   // "entry" | "world" | "journal" | "analysis" | "reflection" | "support" | "campus" | "admin" | "paused"
