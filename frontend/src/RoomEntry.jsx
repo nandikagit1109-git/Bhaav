@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * RoomEntry — warm, inviting landing screen.
+ * RoomEntry — warm, inviting, home-like landing screen.
  * Pure HTML/CSS with gentle animations. No 3D.
  */
 export default function RoomEntry({ onBegin }) {
@@ -10,7 +10,7 @@ export default function RoomEntry({ onBegin }) {
   const [transitioning, setTransitioning] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setBeginVisible(true), 1200);
+    const t = setTimeout(() => setBeginVisible(true), 1000);
     return () => clearTimeout(t);
   }, []);
 
@@ -23,31 +23,38 @@ export default function RoomEntry({ onBegin }) {
   return (
     <div style={{
       width: '100vw', height: '100vh',
-      background: 'linear-gradient(180deg, #0a0806 0%, #14100c 40%, #1a1410 100%)',
+      background: 'linear-gradient(180deg, #0f0b08 0%, #1a1410 30%, #221a12 60%, #1a1410 100%)',
       position: 'relative', overflow: 'hidden',
     }}>
 
-      {/* Warm ambient glow — top */}
+      {/* Warm ambient glow — top center (ceiling lamp feel) */}
       <div style={{
-        position: 'absolute', top: '-20%', left: '30%',
-        width: '40%', height: '50%',
-        background: 'radial-gradient(ellipse, rgba(200,149,108,0.06) 0%, transparent 70%)',
+        position: 'absolute', top: '-15%', left: '25%',
+        width: '50%', height: '55%',
+        background: 'radial-gradient(ellipse, rgba(240,200,122,0.08) 0%, transparent 65%)',
         pointerEvents: 'none',
       }} />
 
-      {/* Warm ambient glow — center */}
+      {/* Warm ambient glow — center (desk lamp feel) */}
       <div style={{
-        position: 'absolute', top: '35%', left: '20%',
-        width: '60%', height: '30%',
-        background: 'radial-gradient(ellipse, rgba(200,149,108,0.04) 0%, transparent 70%)',
+        position: 'absolute', top: '40%', left: '15%',
+        width: '70%', height: '35%',
+        background: 'radial-gradient(ellipse, rgba(200,149,108,0.06) 0%, transparent 65%)',
         pointerEvents: 'none',
       }} />
 
-      {/* Bhaav Title */}
+      {/* Subtle warm gradient band at bottom */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: '30%',
+        background: 'linear-gradient(to top, rgba(200,149,108,0.04) 0%, transparent 100%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Bhaav Title — warm cream */}
       <motion.h1
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.5, ease: [0.6, 0.05, -0.01, 0.9] }}
+        transition={{ duration: 1.8, ease: [0.6, 0.05, -0.01, 0.9] }}
         style={{
           fontFamily: "'Cormorant Garamond', serif",
           fontSize: 'clamp(80px, 13vw, 170px)',
@@ -65,10 +72,31 @@ export default function RoomEntry({ onBegin }) {
         Bhaav
       </motion.h1>
 
+      {/* Tagline — warm, inviting */}
+      <motion.p
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.5, delay: 0.4, ease: [0.6, 0.05, -0.01, 0.9] }}
+        style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontSize: 'clamp(16px, 2.5vw, 24px)',
+          fontWeight: 300,
+          letterSpacing: '0.04em',
+          color: 'rgba(200,160,120,0.5)',
+          position: 'absolute',
+          top: '35%',
+          left: 0, right: 0,
+          textAlign: 'center',
+          margin: 0,
+        }}
+      >
+        a private space for your writing rhythm
+      </motion.p>
+
       {/* Ink Line — warm amber */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.5 }}
+        animate={{ opacity: 0.6 }}
         transition={{ duration: 2.5, delay: 0.3 }}
         style={{
           position: 'absolute', top: '50%', left: '50%',
@@ -84,16 +112,16 @@ export default function RoomEntry({ onBegin }) {
           />
           <path
             d="M 0 50 C 100 35, 180 65, 280 48 C 380 31, 460 69, 560 50 C 660 31, 740 69, 900 50"
-            fill="none" stroke="#4a7a8a" strokeWidth="0.6" strokeLinecap="round" opacity="0.35"
+            fill="none" stroke="#d4a870" strokeWidth="0.6" strokeLinecap="round" opacity="0.35"
           />
         </svg>
       </motion.div>
 
-      {/* Sub-headline — warm tone */}
+      {/* Bottom message — warm and welcoming */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1.5, delay: 0.6 }}
+        transition={{ duration: 1.5, delay: 0.8 }}
         style={{
           fontFamily: "'Inter', sans-serif",
           fontSize: '8px',
@@ -102,13 +130,13 @@ export default function RoomEntry({ onBegin }) {
           textTransform: 'uppercase',
           color: 'rgba(200,160,120,0.4)',
           position: 'absolute',
-          bottom: '5vh',
+          bottom: '8vh',
           left: 0, right: 0,
           textAlign: 'center',
           margin: 0,
         }}
       >
-        a quiet space to notice
+        your words stay private · only your rhythm is observed
       </motion.p>
 
       {/* [ Begin ] — warm amber text */}
@@ -127,18 +155,22 @@ export default function RoomEntry({ onBegin }) {
               bottom: '14vh',
               left: 0, right: 0,
               background: 'none',
-              border: 'none',
+              border: '1px solid rgba(200,149,108,0.3)',
+              borderRadius: '100px',
               cursor: 'pointer',
-              padding: '14px 30px',
+              padding: '14px 40px',
               fontFamily: "'Inter', sans-serif",
               fontSize: '9px',
               fontWeight: 400,
               letterSpacing: '0.12em',
               color: '#c8956c',
               outline: 'none',
+              margin: '0 auto',
+              display: 'block',
+              width: 'fit-content',
             }}
           >
-            [ Begin ]
+            [ begin ]
           </motion.button>
         )}
       </AnimatePresence>
@@ -153,7 +185,7 @@ export default function RoomEntry({ onBegin }) {
             style={{
               position: 'absolute',
               top: 0, left: 0, width: '100%', height: '100%',
-              background: '#0a0806', zIndex: 20,
+              background: '#0f0b08', zIndex: 20,
             }}
           />
         )}

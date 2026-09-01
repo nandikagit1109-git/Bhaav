@@ -20,20 +20,30 @@ import useGameStore from './gameStore';
 function RoomShell() {
   return (
     <group>
-      {/* Floor */}
+      {/* Floor — warm wood tone */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#2a1e14" roughness={0.7} metalness={0.05} />
+        <meshStandardMaterial color="#3d2e1e" roughness={0.6} metalness={0.02} />
       </mesh>
-      {/* Back wall */}
+      {/* Back wall — light plaster */}
       <mesh position={[0, 1.5, -3]}>
         <planeGeometry args={[10, 3]} />
-        <meshStandardMaterial color="#2a2218" roughness={0.85} />
+        <meshStandardMaterial color="#3a3028" roughness={0.8} />
       </mesh>
-      {/* Ceiling */}
+      {/* Left wall — warm tone */}
+      <mesh position={[-3.5, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[8, 3]} />
+        <meshStandardMaterial color="#342820" roughness={0.8} />
+      </mesh>
+      {/* Right wall — lighter near window */}
+      <mesh position={[3.5, 1.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        <planeGeometry args={[8, 3]} />
+        <meshStandardMaterial color="#3d3028" roughness={0.8} />
+      </mesh>
+      {/* Ceiling — slightly lighter */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#1a1610" roughness={0.9} />
+        <meshStandardMaterial color="#2a2218" roughness={0.9} />
       </mesh>
     </group>
   );
@@ -48,14 +58,14 @@ function LoadingScreen({ progress }) {
   return (
     <div style={{
       position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-      background: '#0a0806', display: 'flex', flexDirection: 'column',
+      background: '#1a1410', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', zIndex: 10,
       transition: 'opacity 0.8s ease', opacity: progress >= 100 ? 0 : 1,
       pointerEvents: progress >= 100 ? 'none' : 'auto',
     }}>
       <p style={{
         fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: 300,
-        letterSpacing: '0.1em', color: 'rgba(200,160,120,0.5)', marginBottom: '24px',
+        letterSpacing: '0.1em', color: 'rgba(200,149,108,0.6)', marginBottom: '24px',
       }}>entering the room</p>
       <div style={{
         width: '200px', height: '1px', background: 'rgba(200,160,120,0.08)',
@@ -202,7 +212,7 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
   }, [onWrite, onAnalysis, onReflection, onSupport, onDashboard]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#141008', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#1e1610', position: 'relative' }}>
       {loading && <LoadingScreen progress={loadProgress} />}
 
       <Canvas
@@ -213,8 +223,8 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
         onCreated={() => setLoadProgress(100)}
       >
         <Suspense fallback={null}>
-          <color attach="background" args={['#141008']} />
-          <fog attach="fog" args={['#141008', 2, 12]} />
+          <color attach="background" args={['#1e1610']} />
+          <fog attach="fog" args={['#1e1610', 3, 14]} />
 
           <FirstPersonControls
             moveSpeed={2.8}

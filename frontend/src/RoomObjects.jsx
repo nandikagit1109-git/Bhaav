@@ -11,23 +11,23 @@ export const Desk = forwardRef(function Desk({ highlighted }, ref) {
     <group ref={ref} position={[0, 0, 0]}>
       <mesh position={[0, 0.6, 0]}>
         <boxGeometry args={[1.6, 0.04, 0.8]} />
-        <meshStandardMaterial color="#2a1e14" roughness={0.75} />
+        <meshStandardMaterial color="#4a3520" roughness={0.65} />
       </mesh>
       <mesh position={[-0.7, 0.3, -0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#2a2018" roughness={0.75} />
+        <meshStandardMaterial color="#3d2a18" roughness={0.65} />
       </mesh>
       <mesh position={[0.7, 0.3, -0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#2a2018" roughness={0.75} />
+        <meshStandardMaterial color="#3d2a18" roughness={0.65} />
       </mesh>
       <mesh position={[-0.7, 0.3, 0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#2a2018" roughness={0.75} />
+        <meshStandardMaterial color="#3d2a18" roughness={0.65} />
       </mesh>
       <mesh position={[0.7, 0.3, 0.3]}>
         <boxGeometry args={[0.04, 0.6, 0.04]} />
-        <meshStandardMaterial color="#2a2018" roughness={0.75} />
+        <meshStandardMaterial color="#3d2a18" roughness={0.65} />
       </mesh>
     </group>
   );
@@ -208,12 +208,11 @@ export function FloatingPapers() {
 // BOOKSHELF — static, no useFrame
 // ========================================
 export const BookShelf = forwardRef(function BookShelf({ clutterLevel = 0, highlighted }, ref) {
-  const books = useMemo(() => {
-    return Array.from({ length: 4 }, (_, i) => ({
+  const books = useMemo(() => {      return Array.from({ length: 4 }, (_, i) => ({
       id: i,
       x: -0.4 + i * 0.16,
       height: 0.22 + Math.random() * 0.18,
-      color: new THREE.Color().setHSL(0.06 + Math.random() * 0.12, 0.2, 0.14 + Math.random() * 0.1),
+      color: new THREE.Color().setHSL(0.06 + Math.random() * 0.12, 0.25, 0.22 + Math.random() * 0.1),
       lean: (Math.random() - 0.5) * 0.08,
     }));
   }, []);
