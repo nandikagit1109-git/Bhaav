@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import useGameStore from './gameStore';
@@ -9,17 +9,25 @@ const _toObj = new THREE.Vector3();
 const _worldPos = new THREE.Vector3();
 
 /**
- * Optimized crosshair — raycast every 3 frames.
+ * Optimized crosshair — raycast every 5 frames.
+ *
+ * PERFORMANCE: Uses refs instead of React state for hover tracking.
+ * The previous version called setHovered() (React state) from inside
+ * useFrame, which triggered a full React re-render of MoodRoom every
+ * 5 frames — completely unnecessary during pointer movement.
+ *
+ * Now: hover state lives in a ref. Only the Zustand store update (which
+ * is cheap) fires, and only when the hovered object actually changes.
  */
 export default function Crosshair({ interactables = [], onInteract }) {
   const { camera } = useThree();
-  const [hovered, setHovered] = useState(null);
   const setHoveredObject = useGameStore((s) => s.setHoveredObject);
   const frameCount = useRef(0);
+  const currentHovered = useRef(null);
 
   useFrame(() => {
     frameCount.current++;
-    if (frameCount.current % 5 !== 0) return; // Only every 5th frame
+    if (frameCount.current % 5 !== 0) return;
     if (!interactables.length) return;
 
     _dir.set(0, 0, -1).applyQuaternion(camera.quaternion);
@@ -46,24 +54,23 @@ export default function Crosshair({ interactables = [], onInteract }) {
     }
 
     const newHovered = closest ? closest.id : null;
-    setHovered((prev) => {
-      if (prev !== newHovered) {
-        setHoveredObject(newHovered);
-        return newHovered;
-      }
-      return prev;
-    });
+
+    // Only update Zustand if changed — no React state, no re-render
+    if (currentHovered.current !== newHovered) {
+      currentHovered.current = newHovered;
+      setHoveredObject(newHovered);
+    }
   });
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === 'KeyE' && hovered) {
-        onInteract?.(hovered);
+      if (e.code === 'KeyE' && currentHovered.current) {
+        onInteract?.(currentHovered.current);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [hovered, onInteract]);
+  }, [onInteract]);
 
   return null;
 }

@@ -1,40 +1,38 @@
 import { Suspense, useRef, useMemo, useState, useCallback, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import { motion } from 'framer-motion';
-import * as THREE from 'three';
 
 import FirstPersonControls from './FirstPersonControls.jsx';
 import Crosshair from './Crosshair.jsx';
 import MoodLighting from './MoodLighting.jsx';
 import {
-  Desk, Chair, Journal, DeskLamp, Radio, WallClock,
-  FloatingPapers, BookShelf, Window, WallArt, PottedPlant, WallLightStrip,
+  Desk, Chair, Journal, DeskLamp, WallClock,
+  BookShelf, Window, WallArt, PottedPlant, WallLightStrip,
 } from './RoomObjects.jsx';
 import {
-  RhythmWall, ReflectionSpace, SupportRoom, AnalysisZone,
-  CampusPulse, SuggestionObject, SessionMemory,
+  RhythmWall, SupportRoom, AnalysisZone,
 } from './RoomAreas.jsx';
 import useGameStore from './gameStore';
 
 // ========================================
-// ROOM SHELL
+// ROOM SHELL — static, no useFrame
 // ========================================
 function RoomShell() {
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[10, 8]} />
         <meshStandardMaterial color="#0e0c0a" roughness={0.85} metalness={0.02} />
       </mesh>
-      <mesh position={[0, 1.5, -3]} receiveShadow>
+      <mesh position={[0, 1.5, -3]}>
         <planeGeometry args={[10, 3]} />
         <meshStandardMaterial color="#100e0c" roughness={0.92} />
       </mesh>
-      <mesh position={[-4, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+      <mesh position={[-4, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[8, 3]} />
         <meshStandardMaterial color="#0e0c0a" roughness={0.92} />
       </mesh>
-      <mesh position={[4, 1.5, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+      <mesh position={[4, 1.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[8, 3]} />
         <meshStandardMaterial color="#0e0c0a" roughness={0.92} />
       </mesh>
@@ -47,12 +45,13 @@ function RoomShell() {
 }
 
 // ========================================
-// DUST PARTICLES
+// DUST PARTICLES — STATIC, no useFrame
 // ========================================
+// PERFORMANCE: Previous version had 50 particles with per-frame useFrame
+// updates. Now purely static — zero per-frame CPU cost.
 function DustParticles() {
-  const ref = useRef();
-  const count = 50;
   const positions = useMemo(() => {
+    const count = 30;
     const arr = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       arr[i * 3] = (Math.random() - 0.5) * 8;
@@ -62,28 +61,12 @@ function DustParticles() {
     return arr;
   }, []);
 
-  // Update every 3rd frame to reduce CPU cost
-  const frameCount = useRef(0);
-  useFrame((state) => {
-    frameCount.current++;
-    if (frameCount.current % 3 !== 0) return;
-    if (!ref.current) return;
-    const arr = ref.current.geometry.attributes.position.array;
-    const t = state.clock.elapsedTime;
-    for (let i = 0; i < count; i++) {
-      arr[i * 3 + 1] += Math.sin(t * 0.08 + i * 0.5) * 0.001;
-      arr[i * 3] += Math.cos(t * 0.05 + i * 0.3) * 0.0003;
-      if (arr[i * 3 + 1] > 3) arr[i * 3 + 1] = 0;
-    }
-    ref.current.geometry.attributes.position.needsUpdate = true;
-  });
-
   return (
-    <points ref={ref}>
+    <points>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
+        <bufferAttribute attach="attributes-position" count={30} array={positions} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial color="#e8d8c0" size={0.004} transparent opacity={0.12} sizeAttenuation />
+      <pointsMaterial color="#e8d8c0" size={0.004} transparent opacity={0.1} sizeAttenuation />
     </points>
   );
 }
@@ -123,51 +106,31 @@ function LoadingScreen({ progress }) {
 }
 
 // ========================================
-// CENTERED INK WAVE
+// CENTERED INK WAVE — CSS only, no framer-motion
 // ========================================
+// PERFORMANCE: Replaced framer-motion infinite animations with CSS.
 function CenteredInkWave() {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 3, delay: 1, ease: [0.6, 0.05, -0.01, 0.9] }}
-      style={{
-        position: 'absolute', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 'min(700px, 85vw)', height: '120px',
-        pointerEvents: 'none', zIndex: 2,
-      }}
-    >
-      <motion.svg
-        viewBox="0 0 900 100" preserveAspectRatio="none"
-        style={{ width: '100%', height: '100%', overflow: 'visible' }}
-        animate={{ opacity: [0.25, 0.5, 0.25], scaleY: [1, 1.03, 1] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <motion.path
+    <div style={{
+      position: 'absolute', top: '50%', left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 'min(700px, 85vw)', height: '120px',
+      pointerEvents: 'none', zIndex: 2,
+      opacity: 0.4,
+      animation: 'inkPulse 6s ease-in-out infinite',
+    }}>
+      <svg viewBox="0 0 900 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+        <path
           d="M 0 50 C 80 25, 160 75, 250 50 C 340 25, 420 75, 500 50 C 580 25, 660 75, 750 50 C 830 25, 880 75, 900 50"
           fill="none" stroke="#c8956c" strokeWidth="1.2" strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ pathLength: { duration: 3, ease: [0.6, 0.05, -0.01, 0.9] }, opacity: { duration: 1.5 } }}
         />
-        <motion.path
+        <path
           d="M 0 50 C 100 35, 180 65, 280 48 C 380 31, 460 69, 560 50 C 660 31, 740 69, 900 50"
-          fill="none" stroke="#4a7a8a" strokeWidth="0.6" strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.4 }}
-          transition={{ pathLength: { duration: 3.5, ease: [0.6, 0.05, -0.01, 0.9], delay: 0.3 }, opacity: { duration: 2, delay: 0.3 } }}
+          fill="none" stroke="#4a7a8a" strokeWidth="0.6" strokeLinecap="round" opacity="0.4"
         />
-        <motion.circle cx="900" cy="50" r="3" fill="#c8956c"
-          animate={{ scale: [0.85, 1.3, 0.85], opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.circle cx="900" cy="50" r="8" fill="#c8956c"
-          animate={{ scale: [0.75, 1.5, 0.75], opacity: [0.1, 0.25, 0.1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      </motion.svg>
-    </motion.div>
+        <circle cx="900" cy="50" r="3" fill="#c8956c" opacity="0.6" />
+      </svg>
+    </div>
   );
 }
 
@@ -177,11 +140,9 @@ function CenteredInkWave() {
 function InteractionLabel({ hoveredObject }) {
   if (!hoveredObject) return null;
   const labels = {
-    journal: 'write', lamp: 'toggle light', radio: 'tune',
+    journal: 'write', lamp: 'toggle light',
     clock: 'notice time', bookshelf: 'browse', window: 'look outside',
-    rhythmWall: 'explore rhythm', reflection: 'reflect',
-    support: 'support', analysis: 'explore data', campus: 'campus pulse',
-    suggestion: 'notice',
+    rhythmWall: 'explore rhythm', support: 'support', analysis: 'explore data',
   };
   return (
     <div style={{
@@ -198,32 +159,13 @@ function InteractionLabel({ hoveredObject }) {
 }
 
 // ========================================
-// CROSSHAIR DOT
+// MAIN MOOD ROOM — OPTIMIZED
 // ========================================
-function CrosshairDot() {
-  return (
-    <div style={{
-      position: 'absolute', top: '50%', left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: '4px', height: '4px', borderRadius: '50%',
-      background: 'rgba(255,255,255,0.15)', pointerEvents: 'none',
-    }} />
-  );
-}
-
-// ========================================
-// MAIN MOOD ROOM
-// ========================================
-export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflection, onSupport }) {
-  const gameState = useGameStore((s) => s.gameState);
-  const roomState = useGameStore((s) => s.roomState);
+export default function MoodRoom({ onWrite, onDashboard }) {
   const hoveredObject = useGameStore((s) => s.hoveredObject);
-  const setHoveredObject = useGameStore((s) => s.setHoveredObject);
-  const analysis = useGameStore((s) => s.analysis);
-  const insight = useGameStore((s) => s.insight);
-  const campusData = useGameStore((s) => s.campusData);
   const sessions = useGameStore((s) => s.sessions);
   const sessionCount = useGameStore((s) => s.sessionCount);
+  const analysis = useGameStore((s) => s.analysis);
 
   const [loading, setLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState(0);
@@ -231,29 +173,25 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
   // Refs for interactable objects
   const journalRef = useRef();
   const lampRef = useRef();
-  const radioRef = useRef();
   const clockRef = useRef();
   const bookshelfRef = useRef();
   const windowRef = useRef();
   const rhythmWallRef = useRef();
-  const reflectionRef = useRef();
   const supportRef = useRef();
   const analysisRef = useRef();
-  const campusRef = useRef();
-  const suggestionRef = useRef();
 
   // Loading simulation
   useEffect(() => {
     let progress = 0;
     const interval = setInterval(() => {
-      progress += Math.random() * 15 + 5;
+      progress += Math.random() * 20 + 10;
       if (progress >= 100) {
         progress = 100;
         clearInterval(interval);
-        setTimeout(() => setLoading(false), 800);
+        setTimeout(() => setLoading(false), 600);
       }
       setLoadProgress(Math.min(100, Math.round(progress)));
-    }, 200);
+    }, 150);
     return () => clearInterval(interval);
   }, []);
 
@@ -261,29 +199,23 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
   const interactables = useMemo(() => [
     { id: 'journal', ref: journalRef, maxDistance: 3 },
     { id: 'lamp', ref: lampRef, maxDistance: 3 },
-    { id: 'radio', ref: radioRef, maxDistance: 3.5 },
     { id: 'clock', ref: clockRef, maxDistance: 4 },
     { id: 'bookshelf', ref: bookshelfRef, maxDistance: 4 },
     { id: 'window', ref: windowRef, maxDistance: 4 },
     { id: 'rhythmWall', ref: rhythmWallRef, maxDistance: 4 },
-    { id: 'reflection', ref: reflectionRef, maxDistance: 4 },
     { id: 'support', ref: supportRef, maxDistance: 4 },
     { id: 'analysis', ref: analysisRef, maxDistance: 4 },
-    { id: 'campus', ref: campusRef, maxDistance: 4 },
-    { id: 'suggestion', ref: suggestionRef, maxDistance: 3 },
   ], []);
 
   // E-key interaction
   const handleInteract = useCallback((objectId) => {
     switch (objectId) {
       case 'journal': onWrite(); break;
-      case 'analysis': onAnalysis?.(); break;
-      case 'reflection': onReflection?.(); break;
-      case 'support': onSupport?.(); break;
-      case 'campus': onDashboard?.(); break;
+      case 'analysis': onDashboard?.(); break;
+      case 'support': onDashboard?.(); break;
       default: break;
     }
-  }, [onWrite, onAnalysis, onReflection, onSupport, onDashboard]);
+  }, [onWrite, onDashboard]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000', position: 'relative' }}>
@@ -313,40 +245,24 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
           <MoodLighting />
           <RoomShell />
 
-          {/* === WRITING AREA === */}
+          {/* Core interactables */}
           <Desk highlighted={false} />
           <Chair />
           <Journal ref={journalRef} highlighted={hoveredObject === 'journal'} />
           <DeskLamp ref={lampRef} highlighted={hoveredObject === 'lamp'} />
           <PottedPlant />
 
-          {/* === RHYTHM WALL === */}
+          {/* Data areas */}
           <RhythmWall ref={rhythmWallRef} sessions={sessions} highlighted={hoveredObject === 'rhythmWall'} />
-
-          {/* === ANALYSIS ZONE === */}
           <AnalysisZone ref={analysisRef} analysis={analysis} highlighted={hoveredObject === 'analysis'} />
-
-          {/* === REFLECTION === */}
-          <ReflectionSpace ref={reflectionRef} insight={insight} highlighted={hoveredObject === 'reflection'} />
-
-          {/* === SUPPORT === */}
           <SupportRoom ref={supportRef} highlighted={hoveredObject === 'support'} />
 
-          {/* === CAMPUS PULSE === */}
-          <CampusPulse ref={campusRef} campusData={campusData} highlighted={hoveredObject === 'campus'} />
-
-          {/* === SUGGESTION === */}
-          <SuggestionObject ref={suggestionRef} suggestion={insight?.suggestion} highlighted={hoveredObject === 'suggestion'} />
-
-          {/* === DECOR === */}
-          <Radio ref={radioRef} highlighted={hoveredObject === 'radio'} />
+          {/* Decor — all static, zero useFrame */}
           <WallClock ref={clockRef} highlighted={hoveredObject === 'clock'} />
-          <BookShelf ref={bookshelfRef} clutterLevel={roomState.clutterLevel} highlighted={hoveredObject === 'bookshelf'} />
-          <Window ref={windowRef} moodLevel={roomState.clutterLevel} highlighted={hoveredObject === 'window'} />
+          <BookShelf ref={bookshelfRef} highlighted={hoveredObject === 'bookshelf'} />
+          <Window ref={windowRef} highlighted={hoveredObject === 'window'} />
           <WallArt />
           <WallLightStrip />
-          <FloatingPapers clutterLevel={roomState.clutterLevel} />
-          <SessionMemory sessionCount={sessionCount} />
           <DustParticles />
         </Suspense>
       </Canvas>
@@ -357,7 +273,6 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
         pointerEvents: 'none',
       }}>
         <CenteredInkWave />
-        <CrosshairDot />
         <InteractionLabel hoveredObject={hoveredObject} />
 
         <div style={{
@@ -385,6 +300,14 @@ export default function MoodRoom({ onWrite, onDashboard, onAnalysis, onReflectio
           }}>click to look · wasd to move · e to interact · esc to release</p>
         </div>
       </div>
+
+      {/* CSS for ink pulse animation */}
+      <style>{`
+        @keyframes inkPulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
     </div>
   );
 }

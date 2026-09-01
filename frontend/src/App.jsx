@@ -49,6 +49,7 @@ function App() {
   const sessionStart = useRef(null);
   const keystrokes = useRef([]);
   const liveMetricsRef = useRef({ typingSpeed: 0, pauseDuration: 0, backspaceRate: 0, activityLevel: 0 });
+  const keystrokeCounters = useRef({ charCount: 0, backspaceCount: 0, totalCount: 0 });
 
   // =========================================
   // WEBGL CHECK
@@ -58,9 +59,29 @@ function App() {
   // =========================================
   // USER INIT + DATA FETCH
   // =========================================
+  // Handles fresh backend deployments (e.g. Render) where the old
+  // localStorage user ID no longer exists in the database.
   useEffect(() => {
     async function init() {
       let userId = localStorage.getItem("bhaav_user_id");
+
+      // If we have a stored user, verify it exists on the backend
+      if (userId) {
+        try {
+          const analysisRes = await getAnalysis(userId);
+          setAnalysis(analysisRes);
+          setSessions(analysisRes.sessions || []);
+          setSessionCount(analysisRes.session_count || 0);
+        } catch (e) {
+          // User not found on backend — clear stale ID and create new
+          if (e.message && e.message.includes("not found")) {
+            localStorage.removeItem("bhaav_user_id");
+            userId = null;
+          }
+        }
+      }
+
+      // No valid user — create one
       if (!userId) {
         try {
           const data = await createUser();
@@ -73,6 +94,7 @@ function App() {
         }
       }
 
+      // Fetch remaining data if we have a valid user
       if (userId) {
         const [analysisRes, insightRes, campusRes] = await Promise.allSettled([
           getAnalysis(userId),
@@ -110,6 +132,7 @@ function App() {
 
     sessionStart.current = Date.now();
     keystrokes.current = [];
+    keystrokeCounters.current = { charCount: 0, backspaceCount: 0, totalCount: 0 };
     setText("");
     setIsSessionActive(true);
     setSessionActive(true);
@@ -121,6 +144,9 @@ function App() {
   // =========================================
   // RECORD KEYSTROKE
   // =========================================
+  // PERFORMANCE: Uses O(1) running counters instead of Array.filter()
+  // on every keystroke. The old code iterated the entire events array
+  // twice per keystroke — O(n) per keystroke, causing increasing lag.
   const recordKeystroke = useCallback((event) => {
     if (!isSessionActive) return;
 
@@ -131,18 +157,21 @@ function App() {
 
     keystrokes.current.push({ key_type: keyType, timestamp_ms: Date.now() });
 
-    // Update live metrics
+    // O(1) counter updates instead of O(n) Array.filter
+    const counters = keystrokeCounters.current;
+    counters.totalCount++;
+    if (keyType === "char" || keyType === "space") counters.charCount++;
+    if (keyType === "backspace") counters.backspaceCount++;
+
+    // Update live metrics — O(1) computation
     const now = Date.now();
     const elapsed = (now - (sessionStart.current || now)) / 1000;
     if (elapsed > 0) {
-      const events = keystrokes.current;
-      const charCount = events.filter(e => e.key_type === "char" || e.key_type === "space").length;
-      const backspaces = events.filter(e => e.key_type === "backspace").length;
       liveMetricsRef.current = {
-        typingSpeed: charCount / 5 / (elapsed / 60),
+        typingSpeed: counters.charCount / 5 / (elapsed / 60),
         pauseDuration: 0,
-        backspaceRate: events.length > 0 ? backspaces / events.length : 0,
-        activityLevel: Math.min(1, charCount / 50),
+        backspaceRate: counters.totalCount > 0 ? counters.backspaceCount / counters.totalCount : 0,
+        activityLevel: Math.min(1, counters.charCount / 50),
       };
     }
   }, [isSessionActive]);
@@ -165,6 +194,7 @@ function App() {
     setSessionActive(false);
     sessionStart.current = null;
     keystrokes.current = [];
+    keystrokeCounters.current = { charCount: 0, backspaceCount: 0, totalCount: 0 };
     liveMetricsRef.current = { typingSpeed: 0, pauseDuration: 0, backspaceRate: 0, activityLevel: 0 };
 
     // Navigate to room immediately — don't block on save
