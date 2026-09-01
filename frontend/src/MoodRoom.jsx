@@ -1,6 +1,5 @@
 import { Suspense, useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import * as THREE from 'three';
 
 import FirstPersonControls from './FirstPersonControls.jsx';
 import Crosshair from './Crosshair.jsx';
